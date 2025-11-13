@@ -28,9 +28,9 @@ public class History extends javax.swing.JFrame {
 
         jPanel1 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
-        jButton1 = new javax.swing.JButton();
+        NavBtnBack2Dash = new javax.swing.JButton();
         jLabel8 = new javax.swing.JLabel();
-        jButton4 = new javax.swing.JButton();
+        NavBtnEdit = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
@@ -41,23 +41,32 @@ public class History extends javax.swing.JFrame {
 
         jPanel2.setBackground(new java.awt.Color(0, 121, 151));
 
-        jButton1.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        jButton1.setForeground(new java.awt.Color(255, 255, 255));
-        jButton1.setText("Back to Dashboard");
-        jButton1.setBorderPainted(false);
-        jButton1.setContentAreaFilled(false);
+        NavBtnBack2Dash.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        NavBtnBack2Dash.setForeground(new java.awt.Color(255, 255, 255));
+        NavBtnBack2Dash.setText("Back to Dashboard");
+        NavBtnBack2Dash.setBorderPainted(false);
+        NavBtnBack2Dash.setContentAreaFilled(false);
+        NavBtnBack2Dash.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                NavBtnBack2DashActionPerformed(evt);
+            }
+        });
 
         jLabel8.setFont(new java.awt.Font("Verdana", 1, 14)); // NOI18N
         jLabel8.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel8.setIcon(new javax.swing.ImageIcon("C:\\Users\\bompe\\OneDrive\\Desktop\\2.png")); // NOI18N
         jLabel8.setText("Redstone Health Center");
 
-        jButton4.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        jButton4.setForeground(new java.awt.Color(255, 255, 255));
-        jButton4.setText("Edit Profile");
-        jButton4.setBorder(null);
-        jButton4.setBorderPainted(false);
-        jButton4.setContentAreaFilled(false);
+        NavBtnEdit.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        NavBtnEdit.setForeground(new java.awt.Color(255, 255, 255));
+        NavBtnEdit.setText("Edit Profile");
+        NavBtnEdit.setBorder(null);
+        NavBtnEdit.setBorderPainted(false);
+        NavBtnEdit.setContentAreaFilled(false);
+        NavBtnEdit.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                NavBtnEditActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -70,10 +79,10 @@ public class History extends javax.swing.JFrame {
                         .addComponent(jLabel8))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGap(65, 65, 65)
-                        .addComponent(jButton1))
+                        .addComponent(NavBtnBack2Dash))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGap(80, 80, 80)
-                        .addComponent(jButton4)))
+                        .addComponent(NavBtnEdit)))
                 .addContainerGap(26, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
@@ -82,9 +91,9 @@ public class History extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel8)
                 .addGap(46, 46, 46)
-                .addComponent(jButton1)
+                .addComponent(NavBtnBack2Dash)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jButton4)
+                .addComponent(NavBtnEdit)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -154,6 +163,18 @@ public class History extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
+    private void NavBtnBack2DashActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnBack2DashActionPerformed
+        // TODO add your handling code here:
+        new patientsDash().setVisible(true);
+        dispose();
+    }//GEN-LAST:event_NavBtnBack2DashActionPerformed
+
+    private void NavBtnEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnEditActionPerformed
+        // TODO add your handling code here:
+        new Edit().setVisible(true);
+        dispose();
+    }//GEN-LAST:event_NavBtnEditActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -190,8 +211,8 @@ public class History extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton4;
+    private javax.swing.JButton NavBtnBack2Dash;
+    private javax.swing.JButton NavBtnEdit;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;
