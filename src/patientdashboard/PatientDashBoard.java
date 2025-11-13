@@ -21,8 +21,8 @@ public class PatientDashBoard {
                  Thread.sleep(20);
                 splash.jProgressBar1.setValue(i);
                 if(i==100){
-                    new patientsDash().setVisible(true);
-      
+                    new logIN().setVisible(true);
+                    screen.dispose();
                 }
             }
         }catch(Exception e){

@@ -4,6 +4,8 @@
  */
 package patientdashboard;
 
+import patientdashboard.logIN;
+
 /**
  *
  * @author bompe
@@ -66,7 +68,8 @@ public class splash extends javax.swing.JFrame {
         
         
     }//GEN-LAST:event_jLabel1MouseClicked
-
+ 
+    
     /**
      * @param args the command line arguments
      */
