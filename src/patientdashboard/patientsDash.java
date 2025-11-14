@@ -444,8 +444,8 @@ public class patientsDash extends javax.swing.JFrame {
         jButton1.setText("Visit site");
         jPanel8.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 100, -1, -1));
 
-        jLabel34.setText("jLabel34");
-        jPanel8.add(jLabel34, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 0, -1, 150));
+        jLabel34.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/pexels-towfiqu-barbhuiya-3440682-8395815.jpg"))); // NOI18N
+        jPanel8.add(jLabel34, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 440, 150));
 
         jPanel9.setBackground(new java.awt.Color(0, 121, 151));
 
