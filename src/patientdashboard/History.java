@@ -34,7 +34,10 @@ public class History extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         NavBtnBack2Dash = new javax.swing.JButton();
         jLabel8 = new javax.swing.JLabel();
-        NavBtnEdit = new javax.swing.JButton();
+        NavBtnBookAppointment = new javax.swing.JButton();
+        NavBtnCancelAppointment = new javax.swing.JButton();
+        NavBtnEditProfile = new javax.swing.JButton();
+        jButton7 = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
@@ -47,7 +50,8 @@ public class History extends javax.swing.JFrame {
 
         NavBtnBack2Dash.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         NavBtnBack2Dash.setForeground(new java.awt.Color(255, 255, 255));
-        NavBtnBack2Dash.setText("Back to Dashboard");
+        NavBtnBack2Dash.setText("Dash Board");
+        NavBtnBack2Dash.setBorder(null);
         NavBtnBack2Dash.setBorderPainted(false);
         NavBtnBack2Dash.setContentAreaFilled(false);
         NavBtnBack2Dash.addActionListener(new java.awt.event.ActionListener() {
@@ -61,52 +65,87 @@ public class History extends javax.swing.JFrame {
         jLabel8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/2.png"))); // NOI18N
         jLabel8.setText("Redstone Health Center");
 
-        NavBtnEdit.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        NavBtnEdit.setForeground(new java.awt.Color(255, 255, 255));
-        NavBtnEdit.setText("Edit Profile");
-        NavBtnEdit.setBorder(null);
-        NavBtnEdit.setBorderPainted(false);
-        NavBtnEdit.setContentAreaFilled(false);
-        NavBtnEdit.addActionListener(new java.awt.event.ActionListener() {
+        NavBtnBookAppointment.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        NavBtnBookAppointment.setForeground(new java.awt.Color(255, 255, 255));
+        NavBtnBookAppointment.setText("Book Appointment");
+        NavBtnBookAppointment.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        NavBtnBookAppointment.setBorderPainted(false);
+        NavBtnBookAppointment.setContentAreaFilled(false);
+        NavBtnBookAppointment.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                NavBtnEditActionPerformed(evt);
+                NavBtnBookAppointmentActionPerformed(evt);
             }
         });
+
+        NavBtnCancelAppointment.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        NavBtnCancelAppointment.setForeground(new java.awt.Color(255, 255, 255));
+        NavBtnCancelAppointment.setText("Cancel Appointment");
+        NavBtnCancelAppointment.setBorder(null);
+        NavBtnCancelAppointment.setBorderPainted(false);
+        NavBtnCancelAppointment.setContentAreaFilled(false);
+        NavBtnCancelAppointment.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                NavBtnCancelAppointmentActionPerformed(evt);
+            }
+        });
+
+        NavBtnEditProfile.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        NavBtnEditProfile.setForeground(new java.awt.Color(255, 255, 255));
+        NavBtnEditProfile.setText("Edit Profile");
+        NavBtnEditProfile.setBorder(null);
+        NavBtnEditProfile.setBorderPainted(false);
+        NavBtnEditProfile.setContentAreaFilled(false);
+        NavBtnEditProfile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                NavBtnEditProfileActionPerformed(evt);
+            }
+        });
+
+        jButton7.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jButton7.setForeground(new java.awt.Color(255, 255, 255));
+        jButton7.setText("Help");
+        jButton7.setBorder(null);
+        jButton7.setBorderPainted(false);
+        jButton7.setContentAreaFilled(false);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGap(65, 65, 65)
-                                .addComponent(NavBtnBack2Dash))
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGap(80, 80, 80)
-                                .addComponent(NavBtnEdit)))
-                        .addGap(0, 45, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jLabel8)))
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(jLabel8)
                 .addContainerGap())
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGap(56, 56, 56)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jButton7)
+                    .addComponent(NavBtnEditProfile)
+                    .addComponent(NavBtnCancelAppointment, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(NavBtnBookAppointment)
+                    .addComponent(NavBtnBack2Dash))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel8)
-                .addGap(46, 46, 46)
+                .addGap(50, 50, 50)
                 .addComponent(NavBtnBack2Dash)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(NavBtnEdit)
-                .addContainerGap(433, Short.MAX_VALUE))
+                .addComponent(NavBtnBookAppointment)
+                .addGap(18, 18, 18)
+                .addComponent(NavBtnCancelAppointment)
+                .addGap(18, 18, 18)
+                .addComponent(NavBtnEditProfile)
+                .addGap(18, 18, 18)
+                .addComponent(jButton7)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
-        jLabel1.setText("History");
+        jLabel1.setText("Medical History");
 
         jTable1.setBackground(new java.awt.Color(0, 153, 153));
         jTable1.setForeground(new java.awt.Color(255, 255, 255));
@@ -144,8 +183,8 @@ public class History extends javax.swing.JFrame {
                 .addGap(84, 84, 84)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 673, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(64, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 820, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(35, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -154,8 +193,8 @@ public class History extends javax.swing.JFrame {
                 .addGap(19, 19, 19)
                 .addComponent(jLabel1)
                 .addGap(34, 34, 34)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 438, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 485, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(57, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -179,11 +218,20 @@ public class History extends javax.swing.JFrame {
         dispose();
     }//GEN-LAST:event_NavBtnBack2DashActionPerformed
 
-    private void NavBtnEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnEditActionPerformed
+    private void NavBtnBookAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnBookAppointmentActionPerformed
         // TODO add your handling code here:
-        new Edit().setVisible(true);
-        dispose();
-    }//GEN-LAST:event_NavBtnEditActionPerformed
+
+    }//GEN-LAST:event_NavBtnBookAppointmentActionPerformed
+
+    private void NavBtnCancelAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnCancelAppointmentActionPerformed
+        // TODO add your handling code here:
+
+    }//GEN-LAST:event_NavBtnCancelAppointmentActionPerformed
+
+    private void NavBtnEditProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnEditProfileActionPerformed
+        // TODO add your handling code here:
+
+    }//GEN-LAST:event_NavBtnEditProfileActionPerformed
 
     /**
      * @param args the command line arguments
@@ -222,7 +270,10 @@ public class History extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton NavBtnBack2Dash;
-    private javax.swing.JButton NavBtnEdit;
+    private javax.swing.JButton NavBtnBookAppointment;
+    private javax.swing.JButton NavBtnCancelAppointment;
+    private javax.swing.JButton NavBtnEditProfile;
+    private javax.swing.JButton jButton7;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;

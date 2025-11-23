@@ -22,6 +22,8 @@ public class Cancel extends javax.swing.JFrame {
         
         
     }
+    
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -32,17 +34,34 @@ public class Cancel extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        NavBtnMedicalHistory = new javax.swing.JButton();
         jPanel1 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         jLabel8 = new javax.swing.JLabel();
-        NavBtnEdit = new javax.swing.JButton();
         NavBtnBack2Dash = new javax.swing.JButton();
+        NavBtnBookAppointment = new javax.swing.JButton();
+        NavBtnEditProfile = new javax.swing.JButton();
+        NavBtnMedicalHistory1 = new javax.swing.JButton();
+        jButton7 = new javax.swing.JButton();
         jLabel6 = new javax.swing.JLabel();
         jButton1 = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTable2 = new javax.swing.JTable();
 
+        NavBtnMedicalHistory.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        NavBtnMedicalHistory.setForeground(new java.awt.Color(255, 255, 255));
+        NavBtnMedicalHistory.setText("Medical History");
+        NavBtnMedicalHistory.setBorder(null);
+        NavBtnMedicalHistory.setBorderPainted(false);
+        NavBtnMedicalHistory.setContentAreaFilled(false);
+        NavBtnMedicalHistory.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                NavBtnMedicalHistoryActionPerformed(evt);
+            }
+        });
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setResizable(false);
 
         jPanel1.setBackground(new java.awt.Color(204, 204, 255));
 
@@ -53,21 +72,11 @@ public class Cancel extends javax.swing.JFrame {
         jLabel8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/2.png"))); // NOI18N
         jLabel8.setText("Redstone Health Center");
 
-        NavBtnEdit.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        NavBtnEdit.setForeground(new java.awt.Color(255, 255, 255));
-        NavBtnEdit.setText("Edit Profile");
-        NavBtnEdit.setBorder(null);
-        NavBtnEdit.setBorderPainted(false);
-        NavBtnEdit.setContentAreaFilled(false);
-        NavBtnEdit.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                NavBtnEditActionPerformed(evt);
-            }
-        });
-
         NavBtnBack2Dash.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         NavBtnBack2Dash.setForeground(new java.awt.Color(255, 255, 255));
-        NavBtnBack2Dash.setText("Back to Dashboard");
+        NavBtnBack2Dash.setText("Dash board");
+        NavBtnBack2Dash.setBorder(null);
+        NavBtnBack2Dash.setBorderPainted(false);
         NavBtnBack2Dash.setContentAreaFilled(false);
         NavBtnBack2Dash.setDefaultCapable(false);
         NavBtnBack2Dash.addActionListener(new java.awt.event.ActionListener() {
@@ -75,6 +84,49 @@ public class Cancel extends javax.swing.JFrame {
                 NavBtnBack2DashActionPerformed(evt);
             }
         });
+
+        NavBtnBookAppointment.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        NavBtnBookAppointment.setForeground(new java.awt.Color(255, 255, 255));
+        NavBtnBookAppointment.setText("Book Appointment");
+        NavBtnBookAppointment.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        NavBtnBookAppointment.setBorderPainted(false);
+        NavBtnBookAppointment.setContentAreaFilled(false);
+        NavBtnBookAppointment.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                NavBtnBookAppointmentActionPerformed(evt);
+            }
+        });
+
+        NavBtnEditProfile.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        NavBtnEditProfile.setForeground(new java.awt.Color(255, 255, 255));
+        NavBtnEditProfile.setText("Edit Profile");
+        NavBtnEditProfile.setBorder(null);
+        NavBtnEditProfile.setBorderPainted(false);
+        NavBtnEditProfile.setContentAreaFilled(false);
+        NavBtnEditProfile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                NavBtnEditProfileActionPerformed(evt);
+            }
+        });
+
+        NavBtnMedicalHistory1.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        NavBtnMedicalHistory1.setForeground(new java.awt.Color(255, 255, 255));
+        NavBtnMedicalHistory1.setText("Medical History");
+        NavBtnMedicalHistory1.setBorder(null);
+        NavBtnMedicalHistory1.setBorderPainted(false);
+        NavBtnMedicalHistory1.setContentAreaFilled(false);
+        NavBtnMedicalHistory1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                NavBtnMedicalHistory1ActionPerformed(evt);
+            }
+        });
+
+        jButton7.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jButton7.setForeground(new java.awt.Color(255, 255, 255));
+        jButton7.setText("Help");
+        jButton7.setBorder(null);
+        jButton7.setBorderPainted(false);
+        jButton7.setContentAreaFilled(false);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -85,12 +137,13 @@ public class Cancel extends javax.swing.JFrame {
                 .addComponent(jLabel8)
                 .addContainerGap())
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(59, 59, 59)
+                .addGap(65, 65, 65)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jButton7)
+                    .addComponent(NavBtnMedicalHistory1)
+                    .addComponent(NavBtnEditProfile)
                     .addComponent(NavBtnBack2Dash)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(9, 9, 9)
-                        .addComponent(NavBtnEdit)))
+                    .addComponent(NavBtnBookAppointment))
                 .addGap(0, 0, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
@@ -98,21 +151,28 @@ public class Cancel extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel8)
-                .addGap(42, 42, 42)
+                .addGap(80, 80, 80)
                 .addComponent(NavBtnBack2Dash)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(NavBtnBookAppointment)
                 .addGap(18, 18, 18)
-                .addComponent(NavBtnEdit)
+                .addComponent(NavBtnEditProfile)
+                .addGap(18, 18, 18)
+                .addComponent(NavBtnMedicalHistory1)
+                .addGap(18, 18, 18)
+                .addComponent(jButton7)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jLabel6.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLabel6.setText("Cancel Appointments");
 
-        jButton1.setBackground(new java.awt.Color(92, 184, 92));
+        jButton1.setBackground(new java.awt.Color(0, 153, 0));
         jButton1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jButton1.setForeground(new java.awt.Color(255, 255, 255));
         jButton1.setText("Cancel");
-        jButton1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(92, 184, 92), 2, true));
+        jButton1.setBorder(null);
+        jButton1.setBorderPainted(false);
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1ActionPerformed(evt);
@@ -155,8 +215,8 @@ public class Cancel extends javax.swing.JFrame {
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 720, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 49, Short.MAX_VALUE)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 754, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(30, 30, 30))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -164,7 +224,7 @@ public class Cancel extends javax.swing.JFrame {
                                 .addGap(27, 27, 27)
                                 .addComponent(jLabel6))
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(208, 208, 208)
+                                .addGap(229, 229, 229)
                                 .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 361, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
@@ -176,9 +236,9 @@ public class Cancel extends javax.swing.JFrame {
                 .addComponent(jLabel6)
                 .addGap(59, 59, 59)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 270, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(62, 62, 62)
+                .addGap(65, 65, 65)
                 .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(77, Short.MAX_VALUE))
+                .addContainerGap(146, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -195,6 +255,7 @@ public class Cancel extends javax.swing.JFrame {
         );
 
         pack();
+        setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
@@ -207,11 +268,25 @@ public class Cancel extends javax.swing.JFrame {
         dispose();
     }//GEN-LAST:event_NavBtnBack2DashActionPerformed
 
-    private void NavBtnEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnEditActionPerformed
+    private void NavBtnBookAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnBookAppointmentActionPerformed
         // TODO add your handling code here:
-        new Edit().setVisible(true);
-        dispose();
-    }//GEN-LAST:event_NavBtnEditActionPerformed
+
+    }//GEN-LAST:event_NavBtnBookAppointmentActionPerformed
+
+    private void NavBtnEditProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnEditProfileActionPerformed
+        // TODO add your handling code here:
+
+    }//GEN-LAST:event_NavBtnEditProfileActionPerformed
+
+    private void NavBtnMedicalHistoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnMedicalHistoryActionPerformed
+        // TODO add your handling code here:
+
+    }//GEN-LAST:event_NavBtnMedicalHistoryActionPerformed
+
+    private void NavBtnMedicalHistory1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnMedicalHistory1ActionPerformed
+        // TODO add your handling code here:
+
+    }//GEN-LAST:event_NavBtnMedicalHistory1ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -250,8 +325,12 @@ public class Cancel extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton NavBtnBack2Dash;
-    private javax.swing.JButton NavBtnEdit;
+    private javax.swing.JButton NavBtnBookAppointment;
+    private javax.swing.JButton NavBtnEditProfile;
+    private javax.swing.JButton NavBtnMedicalHistory;
+    private javax.swing.JButton NavBtnMedicalHistory1;
     private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton7;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;
