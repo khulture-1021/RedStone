@@ -4,18 +4,133 @@
  */
 package patientdashboard;
 
+import util.DatabaseConnection;
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import java.sql.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  *
  * @author bompe
  */
 public class myPatients extends javax.swing.JFrame {
 
+    private int doctorId;;
     /**
      * Creates new form myPatients
      */
-    public myPatients() {
+    public myPatients(int doctorId) {
+        this.doctorId = doctorId;
         initComponents();
+        setupTable(); 
+        loadPatients();  // Load patient data from the database
     }
+
+    public myPatients() {
+        initComponents(); // NetBeans GUI builder depends on this!
+    }
+    
+    private void setupTable() {
+        // Create/assign a model matching the column headers used in the generated code
+        DefaultTableModel model = new DefaultTableModel(
+            new Object[][] {},
+            new String[] {
+                "Patient_ID", "Patient Name", "Primary Diagnosis", "Date Of Birth",
+                "Gender", "Status", "Email", "Phone Number", "Last Visit", "Next Visit"
+            }
+        ) {
+            Class[] types = new Class[] {
+                Integer.class, String.class, String.class, Object.class, String.class,
+                String.class, String.class, String.class, Object.class, Object.class
+            };
+            boolean[] canEdit = new boolean[] {
+                false, false, false, false, false, false, false, false, false, false
+            };
+
+            @Override
+            public Class getColumnClass(int columnIndex) {
+                return types[columnIndex];
+            }
+
+            @Override
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit[columnIndex];
+            }
+        };
+
+        patientTable.setModel(model);
+
+        // Custom renderer for date columns (8 and 9: Last Visit and Next Visit)
+        DefaultTableCellRenderer dateRenderer = new DefaultTableCellRenderer() {
+            private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+            @Override
+            public void setValue(Object value) {
+                if (value instanceof Date) {
+                    setText(sdf.format((Date) value));
+                } else if (value != null) {
+                    setText(value.toString());
+                } else {
+                    setText("");
+                }
+            }
+        };
+
+        // Make sure the table has columns before setting renderer
+        if (patientTable.getColumnModel().getColumnCount() >= 10) {
+            patientTable.getColumnModel().getColumn(8).setCellRenderer(dateRenderer);
+            patientTable.getColumnModel().getColumn(9).setCellRenderer(dateRenderer);
+        }
+    }
+
+    // Load patients from the database and populate the JTable
+    private void loadPatients() {
+        DefaultTableModel model = (DefaultTableModel) patientTable.getModel();
+        model.setRowCount(0);  // Clear existing rows in the table
+
+        String query = "SELECT * FROM patients WHERE doctorId = ?";  // Query to fetch patients assigned to the doctor
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pst = conn.prepareStatement(query)) {
+
+            pst.setInt(1, doctorId);  // Set the doctorId in the query
+            ResultSet rs = pst.executeQuery();
+
+            // Loop through the results and add them to the JTable
+            while (rs.next()) {
+                // Read date columns as java.sql.Date, convert to java.util.Date for renderer
+                java.sql.Date dobSql = rs.getDate("dob");
+                java.util.Date dob = dobSql != null ? new java.util.Date(dobSql.getTime()) : null;
+
+                java.sql.Date lastVisitSql = rs.getDate("lastVisit");
+                java.util.Date lastVisit = lastVisitSql != null ? new java.util.Date(lastVisitSql.getTime()) : null;
+
+                java.sql.Date nextAppointmentSql = rs.getDate("nextAppointment");
+                java.util.Date nextAppointment = nextAppointmentSql != null ? new java.util.Date(nextAppointmentSql.getTime()) : null;
+
+                model.addRow(new Object[]{
+                    rs.getInt("patientId"),
+                    rs.getString("patientName"),
+                    rs.getString("primaryDiagnosis"),
+                    dob,                     // Date of Birth (Date object)
+                    rs.getString("gender"),
+                    rs.getString("status"),
+                    rs.getString("contactEmail"),
+                    rs.getString("contactNumber"),
+                    lastVisit,               // Last Visit (Date object)
+                    nextAppointment          // Next Appointment (Date object)
+                });
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading patients: " + e.getMessage());
+        }
+    }
+
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -36,7 +151,7 @@ public class myPatients extends javax.swing.JFrame {
         jButton3 = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        patientTable = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
@@ -139,24 +254,31 @@ public class myPatients extends javax.swing.JFrame {
         jLabel5.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLabel5.setText("My Patients");
 
-        jTable1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        patientTable.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        patientTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "Patient_ID", "Diagnosis", "D.O.B", "Status", "Email"
+                "Patient_ID", "Patient Name", "Primary Diagnosis", "Date Of Birth", "Gender", "Status", "Email", "Phone Number", "Last Visit", "Next Visit"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.Object.class
+                java.lang.Integer.class, java.lang.String.class, java.lang.String.class, java.lang.Object.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.Object.class, java.lang.Object.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false, false, false, false
             };
 
             public Class getColumnClass(int columnIndex) {
                 return types [columnIndex];
             }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
         });
-        jScrollPane1.setViewportView(jTable1);
+        jScrollPane1.setViewportView(patientTable);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -214,37 +336,7 @@ public class myPatients extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(myPatients.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(myPatients.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(myPatients.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(myPatients.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new myPatients().setVisible(true);
-            }
-        });
-    }
+    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton2;
@@ -257,6 +349,6 @@ public class myPatients extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
+    private javax.swing.JTable patientTable;
     // End of variables declaration//GEN-END:variables
 }

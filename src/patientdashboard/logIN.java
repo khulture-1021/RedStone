@@ -20,7 +20,7 @@ public class logIN extends javax.swing.JFrame {
      */
     public logIN() {
         initComponents();
-        addRealtimeValidation();
+        setLocationRelativeTo(null);
     }
     
     // ------------------------------------------------------------
@@ -353,7 +353,14 @@ public class logIN extends javax.swing.JFrame {
                     this.dispose();
                 }
 
-                // TODO: doctor + admin dashboards here
+                else if (role.equals("Doctor")) {
+                    int doctorId = rs.getInt(1);
+                    String user = rs.getString("username");
+
+                    DoctorDash d = new DoctorDash(doctorId, user);
+                    d.setVisible(true);
+                    this.dispose();
+                }
 
             } else {
                 lblStatus.setText("Invalid username or password.");

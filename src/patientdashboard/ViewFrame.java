@@ -10,6 +10,8 @@ package patientdashboard;
  */
 public class ViewFrame extends javax.swing.JFrame {
 
+    private int patientId;
+    private String username; 
     /**
      * Creates new form ViewFrame
      */
@@ -316,8 +318,8 @@ public class ViewFrame extends javax.swing.JFrame {
 
     private void NavBtnBack2DashActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnBack2DashActionPerformed
         // TODO add your handling code here:
-        new DoctorDash().setVisible(true);
-        dispose();
+        new patientsDash(patientId, username).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_NavBtnBack2DashActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed

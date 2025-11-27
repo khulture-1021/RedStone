@@ -4,18 +4,95 @@
  */
 package patientdashboard;
 
+import util.DatabaseConnection;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.sql.*;
+
 /**
  *
  * @author bompe
  */
 public class viewAppDoctor extends javax.swing.JFrame {
 
+    private int doctorId;
+    
     /**
      * Creates new form viewAppDoctor
      */
-    public viewAppDoctor() {
+    public viewAppDoctor(int doctorId) {
+        this.doctorId = doctorId;
         initComponents();
+        loadAppointments();
     }
+    
+    // Load the doctor's appointments into the JTable
+    private void loadAppointments() {
+        DefaultTableModel model = (DefaultTableModel) appointmentTable.getModel();
+        model.setRowCount(0);  // Clear existing rows
+
+        String query = "SELECT * FROM appointments WHERE doctorId = ? ORDER BY appointmentDate";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pst = conn.prepareStatement(query)) {
+
+            pst.setInt(1, doctorId);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+                // Add a new row to the table for each appointment
+                model.addRow(new Object[]{
+                    rs.getDate("appointmentDate"),
+                    rs.getString("patientName"),
+                    rs.getString("status"),
+                    rs.getString("reason"),
+                    rs.getString("time")
+                });
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading appointments.");
+        }
+    }
+
+    // Method to accept an appointment
+    private void acceptAppointment(int appointmentId) {
+        String updateStatusQuery = "UPDATE appointments SET status = 'Accepted' WHERE appointmentId = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pst = conn.prepareStatement(updateStatusQuery)) {
+
+            pst.setInt(1, appointmentId);
+            int updatedRows = pst.executeUpdate();
+
+            if (updatedRows > 0) {
+                JOptionPane.showMessageDialog(this, "Appointment Accepted!");
+                loadAppointments();  // Reload appointments after update
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error accepting appointment.");
+        }
+    }
+
+    // Method to decline an appointment
+    private void declineAppointment(int appointmentId) {
+        String updateStatusQuery = "UPDATE appointments SET status = 'Declined' WHERE appointmentId = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pst = conn.prepareStatement(updateStatusQuery)) {
+
+            pst.setInt(1, appointmentId);
+            int updatedRows = pst.executeUpdate();
+
+            if (updatedRows > 0) {
+                JOptionPane.showMessageDialog(this, "Appointment Declined!");
+                loadAppointments();  // Reload appointments after update
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error declining appointment.");
+        }
+    }
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -36,7 +113,7 @@ public class viewAppDoctor extends javax.swing.JFrame {
         jButton3 = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        appointmentTable = new javax.swing.JTable();
         jButton5 = new javax.swing.JButton();
         jButton9 = new javax.swing.JButton();
 
@@ -141,8 +218,8 @@ public class viewAppDoctor extends javax.swing.JFrame {
         jLabel5.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLabel5.setText("Patient Appointments");
 
-        jTable1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        appointmentTable.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        appointmentTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -158,19 +235,29 @@ public class viewAppDoctor extends javax.swing.JFrame {
                 return types [columnIndex];
             }
         });
-        jScrollPane1.setViewportView(jTable1);
+        jScrollPane1.setViewportView(appointmentTable);
 
         jButton5.setBackground(new java.awt.Color(0, 204, 0));
         jButton5.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jButton5.setForeground(new java.awt.Color(255, 255, 255));
         jButton5.setText("Accept");
         jButton5.setBorderPainted(false);
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
 
         jButton9.setBackground(new java.awt.Color(255, 153, 51));
         jButton9.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jButton9.setForeground(new java.awt.Color(255, 255, 255));
         jButton9.setText("Decline");
         jButton9.setBorderPainted(false);
+        jButton9.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton9ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -237,42 +324,35 @@ public class viewAppDoctor extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton6ActionPerformed
 
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        // TODO add your handling code here:
+        int selectedRow = appointmentTable.getSelectedRow();
+        if (selectedRow != -1) {
+            int appointmentId = (int) appointmentTable.getValueAt(selectedRow, 0);  // Get the appointmentId
+            acceptAppointment(appointmentId);
+        } else {
+            JOptionPane.showMessageDialog(this, "Please select an appointment.");
+        }
+    }//GEN-LAST:event_jButton5ActionPerformed
+
+    private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
+        // TODO add your handling code here:
+        int selectedRow = appointmentTable.getSelectedRow();
+        if (selectedRow != -1) {
+            int appointmentId = (int) appointmentTable.getValueAt(selectedRow, 0);  // Get the appointmentId
+            declineAppointment(appointmentId);
+        } else {
+            JOptionPane.showMessageDialog(this, "Please select an appointment.");
+        }
+    }//GEN-LAST:event_jButton9ActionPerformed
+
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(viewAppDoctor.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(viewAppDoctor.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(viewAppDoctor.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(viewAppDoctor.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new viewAppDoctor().setVisible(true);
-            }
-        });
-    }
+    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTable appointmentTable;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
@@ -285,6 +365,5 @@ public class viewAppDoctor extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
     // End of variables declaration//GEN-END:variables
 }
