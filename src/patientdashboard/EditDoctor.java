@@ -4,60 +4,18 @@
  */
 package patientdashboard;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import javax.swing.JOptionPane;
-import com.toedter.calendar.JDateChooser;
-import util.DatabaseConnection;
-
 /**
  *
  * @author bompe
  */
 public class EditDoctor extends javax.swing.JFrame {
 
-    private int doctorId;
-    private String username;
-    
     /**
      * Creates new form EditDoctor
      */
-    public EditDoctor(int doctorId, String username) {
+    public EditDoctor() {
         initComponents();
-        this.doctorId = doctorId;
-        this.username = username;
-
-        loadDoctorProfile();   // load form with doctor data
     }
-    
-    private void loadDoctorProfile() {
-        try {
-            Connection con = DatabaseConnection.getConnection();
-            String sql = "SELECT * FROM doctor WHERE id = ?";
-            PreparedStatement pst = con.prepareStatement(sql);
-            pst.setInt(1, doctorId);
-            ResultSet rs = pst.executeQuery();
-
-            if (rs.next()) {
-                txtFirstName.setText(rs.getString("name"));
-                txtLastName.setText(rs.getString("lastname"));
-                txtEmail.setText(rs.getString("email"));
-                txtPhone.setText(rs.getString("contact"));
-
-                ((javax.swing.JTextField)dateDOB.getDateEditor().getUiComponent())
-                        .setText(rs.getString("dob"));
-
-                cmbGender.setSelectedItem(rs.getString("gender"));
-                txtUsername.setText(rs.getString("username"));
-                txtPassword.setText(rs.getString("password"));
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -79,16 +37,16 @@ public class EditDoctor extends javax.swing.JFrame {
         jButton6 = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        tblDoctor = new javax.swing.JTable();
+        jTable1 = new javax.swing.JTable();
         jLabel10 = new javax.swing.JLabel();
-        txtFirstName = new javax.swing.JTextField();
-        txtLastName = new javax.swing.JTextField();
-        cmbGender = new javax.swing.JComboBox<>();
-        txtEmail = new javax.swing.JTextField();
-        txtPhone = new javax.swing.JTextField();
-        dateDOB = new com.toedter.calendar.JDateChooser();
-        txtUsername = new javax.swing.JTextField();
-        txtPassword = new javax.swing.JTextField();
+        jTextField1 = new javax.swing.JTextField();
+        jTextField2 = new javax.swing.JTextField();
+        jComboBox1 = new javax.swing.JComboBox<>();
+        jTextField4 = new javax.swing.JTextField();
+        jTextField3 = new javax.swing.JTextField();
+        jDateChooser1 = new com.toedter.calendar.JDateChooser();
+        jTextField5 = new javax.swing.JTextField();
+        jTextField7 = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
@@ -97,7 +55,7 @@ public class EditDoctor extends javax.swing.JFrame {
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
         jLabel11 = new javax.swing.JLabel();
-        btnSave = new javax.swing.JButton();
+        jButton1 = new javax.swing.JButton();
 
         jTextField6.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 153, 153), 2, true));
 
@@ -207,9 +165,9 @@ public class EditDoctor extends javax.swing.JFrame {
         jLabel5.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLabel5.setText("Doctor Profile");
 
-        tblDoctor.setBackground(new java.awt.Color(0, 153, 153));
-        tblDoctor.setForeground(new java.awt.Color(255, 255, 255));
-        tblDoctor.setModel(new javax.swing.table.DefaultTableModel(
+        jTable1.setBackground(new java.awt.Color(0, 153, 153));
+        jTable1.setForeground(new java.awt.Color(255, 255, 255));
+        jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -232,31 +190,31 @@ public class EditDoctor extends javax.swing.JFrame {
                 return canEdit [columnIndex];
             }
         });
-        jScrollPane1.setViewportView(tblDoctor);
+        jScrollPane1.setViewportView(jTable1);
 
         jLabel10.setBackground(new java.awt.Color(255, 255, 255));
         jLabel10.setForeground(new java.awt.Color(102, 102, 102));
         jLabel10.setText("Edit only the field you want changed");
 
-        txtFirstName.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 153, 153), 2, true));
-        txtFirstName.addActionListener(new java.awt.event.ActionListener() {
+        jTextField1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 153, 153), 2, true));
+        jTextField1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtFirstNameActionPerformed(evt);
+                jTextField1ActionPerformed(evt);
             }
         });
 
-        txtLastName.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 153, 153), 2, true));
+        jTextField2.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 153, 153), 2, true));
 
-        cmbGender.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Male", "Female" }));
-        cmbGender.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 153, 153), 2, true));
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Male", "Female" }));
+        jComboBox1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 153, 153), 2, true));
 
-        txtEmail.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 153, 153), 2, true));
+        jTextField4.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 153, 153), 2, true));
 
-        txtPhone.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 153, 153), 2, true));
+        jTextField3.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 153, 153), 2, true));
 
-        txtUsername.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 153, 153), 2, true));
+        jTextField5.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 153, 153), 2, true));
 
-        txtPassword.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 153, 153), 2, true));
+        jTextField7.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 153, 153), 2, true));
 
         jLabel2.setText("Name");
 
@@ -274,16 +232,11 @@ public class EditDoctor extends javax.swing.JFrame {
 
         jLabel11.setText("Password");
 
-        btnSave.setBackground(new java.awt.Color(0, 204, 0));
-        btnSave.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        btnSave.setForeground(new java.awt.Color(255, 255, 255));
-        btnSave.setText("Save");
-        btnSave.setBorderPainted(false);
-        btnSave.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnSaveActionPerformed(evt);
-            }
-        });
+        jButton1.setBackground(new java.awt.Color(0, 204, 0));
+        jButton1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        jButton1.setForeground(new java.awt.Color(255, 255, 255));
+        jButton1.setText("Save");
+        jButton1.setBorderPainted(false);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -299,9 +252,9 @@ public class EditDoctor extends javax.swing.JFrame {
                             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 823, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(txtFirstName, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(txtEmail, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(txtUsername, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(jLabel2)
                                     .addComponent(jLabel6)
                                     .addComponent(jLabel9))
@@ -311,9 +264,9 @@ public class EditDoctor extends javax.swing.JFrame {
                                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                                    .addComponent(txtLastName, javax.swing.GroupLayout.DEFAULT_SIZE, 209, Short.MAX_VALUE)
-                                                    .addComponent(txtPhone))
-                                                .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                                    .addComponent(jTextField2, javax.swing.GroupLayout.DEFAULT_SIZE, 209, Short.MAX_VALUE)
+                                                    .addComponent(jTextField3))
+                                                .addComponent(jTextField7, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE))
                                             .addComponent(jLabel3)
                                             .addComponent(jLabel7))
                                         .addGap(48, 48, 48)
@@ -321,8 +274,8 @@ public class EditDoctor extends javax.swing.JFrame {
                                             .addComponent(jLabel8)
                                             .addComponent(jLabel4)
                                             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                                .addComponent(dateDOB, javax.swing.GroupLayout.DEFAULT_SIZE, 178, Short.MAX_VALUE)
-                                                .addComponent(cmbGender, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                                .addComponent(jDateChooser1, javax.swing.GroupLayout.DEFAULT_SIZE, 178, Short.MAX_VALUE)
+                                                .addComponent(jComboBox1, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                                     .addComponent(jLabel11))))
                         .addGap(44, 44, 44))
                     .addGroup(jPanel1Layout.createSequentialGroup()
@@ -332,7 +285,7 @@ public class EditDoctor extends javax.swing.JFrame {
                                 .addComponent(jLabel5))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGap(297, 297, 297)
-                                .addComponent(btnSave, javax.swing.GroupLayout.PREFERRED_SIZE, 306, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 306, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         jPanel1Layout.setVerticalGroup(
@@ -352,9 +305,9 @@ public class EditDoctor extends javax.swing.JFrame {
                     .addComponent(jLabel4))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtFirstName, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtLastName, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cmbGender, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(27, 27, 27)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel6)
@@ -363,19 +316,19 @@ public class EditDoctor extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(txtEmail, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(txtPhone, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(dateDOB, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jDateChooser1, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(33, 33, 33)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel9)
                     .addComponent(jLabel11))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtUsername, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jTextField7, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 87, Short.MAX_VALUE)
-                .addComponent(btnSave, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(48, 48, 48))
         );
 
@@ -398,9 +351,9 @@ public class EditDoctor extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton4ActionPerformed
 
-    private void txtFirstNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtFirstNameActionPerformed
+    private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_txtFirstNameActionPerformed
+    }//GEN-LAST:event_jTextField1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // TODO add your handling code here:
@@ -414,55 +367,50 @@ public class EditDoctor extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton6ActionPerformed
 
-    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveActionPerformed
-        // TODO add your handling code here:
-        String name = txtFirstName.getText();
-        String lastname = txtLastName.getText();
-        String email = txtEmail.getText();
-        String contact = txtPhone.getText();
-        String dob = ((javax.swing.JTextField)dateDOB.getDateEditor().getUiComponent()).getText();
-        String gender = cmbGender.getSelectedItem().toString();
-        String uname = txtUsername.getText();
-        String password = txtPassword.getText();
-
-        try {
-            Connection con = DatabaseConnection.getConnection();
-            String sql = "UPDATE doctor SET name=?, lastname=?, email=?, contact=?, dob=?, gender=?, username=?, password=? WHERE id=?";
-            PreparedStatement pst = con.prepareStatement(sql);
-
-            pst.setString(1, name);
-            pst.setString(2, lastname);
-            pst.setString(3, email);
-            pst.setString(4, contact);
-            pst.setString(5, dob);
-            pst.setString(6, gender);
-            pst.setString(7, uname);
-            pst.setString(8, password);
-            pst.setInt(9, doctorId);
-
-            pst.executeUpdate();
-
-            JOptionPane.showMessageDialog(this, "Profile updated successfully.");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }//GEN-LAST:event_btnSaveActionPerformed
-
     /**
      * @param args the command line arguments
      */
-    
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(EditDoctor.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(EditDoctor.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(EditDoctor.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(EditDoctor.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+
+        /* Create and display the form */
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                new EditDoctor().setVisible(true);
+            }
+        });
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnSave;
-    private javax.swing.JComboBox<String> cmbGender;
-    private com.toedter.calendar.JDateChooser dateDOB;
+    private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
     private javax.swing.JButton jButton6;
+    private javax.swing.JComboBox<String> jComboBox1;
+    private com.toedter.calendar.JDateChooser jDateChooser1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -477,13 +425,13 @@ public class EditDoctor extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTable jTable1;
+    private javax.swing.JTextField jTextField1;
+    private javax.swing.JTextField jTextField2;
+    private javax.swing.JTextField jTextField3;
+    private javax.swing.JTextField jTextField4;
+    private javax.swing.JTextField jTextField5;
     private javax.swing.JTextField jTextField6;
-    private javax.swing.JTable tblDoctor;
-    private javax.swing.JTextField txtEmail;
-    private javax.swing.JTextField txtFirstName;
-    private javax.swing.JTextField txtLastName;
-    private javax.swing.JTextField txtPassword;
-    private javax.swing.JTextField txtPhone;
-    private javax.swing.JTextField txtUsername;
+    private javax.swing.JTextField jTextField7;
     // End of variables declaration//GEN-END:variables
 }

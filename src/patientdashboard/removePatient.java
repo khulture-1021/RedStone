@@ -4,11 +4,6 @@
  */
 package patientdashboard;
 
-import java.sql.*;
-import javax.swing.JOptionPane;
-import javax.swing.table.DefaultTableModel;
-
-
 /**
  *
  * @author bompe
@@ -20,36 +15,7 @@ public class removePatient extends javax.swing.JFrame {
      */
     public removePatient() {
         initComponents();
-        loadPatients();
-        jTable1.setDefaultEditor(Object.class, null); // optional: makes table read-only
     }
-    
-    private void loadPatients() {
-        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-        model.setRowCount(0); // Clear table
-
-        String sql = "SELECT patientId, firstName, lastName, email, phone, gender FROM patients";
-
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/redstone", "root", "");
-             PreparedStatement pst = conn.prepareStatement(sql);
-             ResultSet rs = pst.executeQuery()) {
-
-            while (rs.next()) {
-                model.addRow(new Object[]{
-                    rs.getInt("patientId"),
-                    rs.getString("firstName"),
-                    rs.getString("lastName"),
-                    rs.getString("email"),
-                    rs.getString("phone"),
-                    rs.getString("gender")
-                });
-            }
-
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Failed to load patients: " + ex.getMessage());
-        }
-    }
-
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -216,11 +182,6 @@ public class removePatient extends javax.swing.JFrame {
         jButton2.setForeground(new java.awt.Color(255, 255, 255));
         jButton2.setText("Remove");
         jButton2.setBorderPainted(false);
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
@@ -283,42 +244,6 @@ public class removePatient extends javax.swing.JFrame {
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton5ActionPerformed
-
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        // TODO add your handling code here:
-        int selectedRow = jTable1.getSelectedRow();
-
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a patient to remove.");
-            return;
-        }
-
-        int patientId = (int) jTable1.getValueAt(selectedRow, 0);
-
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to delete this patient?",
-                "Confirm Delete",
-                JOptionPane.YES_NO_OPTION);
-
-        if (confirm != JOptionPane.YES_OPTION) {
-            return;
-        }
-
-        String sql = "DELETE FROM patients WHERE patientId=?";
-
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/redstone", "root", "");
-             PreparedStatement pst = conn.prepareStatement(sql)) {
-
-            pst.setInt(1, patientId);
-            pst.executeUpdate();
-
-            JOptionPane.showMessageDialog(this, "Patient removed successfully!");
-            loadPatients(); // Refresh table
-
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Delete failed: " + ex.getMessage());
-        }
-    }//GEN-LAST:event_jButton2ActionPerformed
 
     /**
      * @param args the command line arguments

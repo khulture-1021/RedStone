@@ -4,14 +4,9 @@
  */
 package patientdashboard;
 
-import java.sql.*;
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import javax.swing.Timer;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 /**
  *
@@ -19,123 +14,22 @@ import java.time.format.DateTimeFormatter;
  */
 public class AdminDash extends javax.swing.JFrame {
 
-    // ---- DASHBOARD STATE ----
-    private int adminId;
-    private String adminUsername;
-    private DefaultTableModel tableModel;
-    private Timer timer;
-
     /**
      * Creates new form AdminDash
      */
-    public AdminDash(int adminId, String username) {
+    public AdminDash() {
         initComponents();
-        this.adminId = adminId;
-        this.adminUsername = username;
-
-        tableModel = new DefaultTableModel();
-        jTable1.setModel(tableModel);
-
-        loadAdminProfile();
-        loadSystemStats();
-        loadRecentAppointments();
         startClock();
     }
-    
-    // ================= ADMIN PROFILE =================
-    private void loadAdminProfile() {
-        String sql = "SELECT adminId, firstName, lastName, email, username FROM admins WHERE adminId = ?";
+     private void startClock() {
+    Timer timer = new Timer(1000, e -> {
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now().withNano(0);
 
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/redstone", "root", "");
-             PreparedStatement pst = conn.prepareStatement(sql)) {
-
-            pst.setInt(1, adminId);
-            ResultSet rs = pst.executeQuery();
-
-            if (rs.next()) {
-                String fname = rs.getString("firstName");
-                String lname = rs.getString("lastName");
-
-                jLabel6.setText(fname + " " + lname);      // Full Name
-                jLabel16.setText(String.valueOf(adminId)); // Admin ID
-                jLabel21.setText(rs.getString("email"));   // Email
-                jLabel18.setText(rs.getString("username")); // Username
-                jLabel2.setText("Hello " + fname);         // Greeting
-            }
-
-        } catch (SQLException ex) {
-            System.out.println("Profile Load Error: " + ex.getMessage());
-        }
-    }
-
-    // ================= SYSTEM STATS =================
-    private void loadSystemStats() {
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/redstone", "root", "")) {
-
-            // Total Doctors
-            try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM doctors");
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) jLabel24.setText(rs.getString(1));
-            }
-
-            // Total Patients
-            try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM patients");
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) jLabel25.setText(rs.getString(1));
-            }
-
-            // Revenue = SUM(serviceFee)
-            try (PreparedStatement ps = conn.prepareStatement("SELECT IFNULL(SUM(serviceFee),0) FROM appointments");
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) jLabel23.setText(rs.getString(1));
-            }
-
-        } catch (SQLException ex) {
-            System.out.println("Stats Load Error: " + ex.getMessage());
-        }
-    }
-
-    // ================= RECENT APPOINTMENTS TABLE =================
-    private void loadRecentAppointments() {
-        String sql = "SELECT appointmentId, patientId, doctorId, appointmentDate, status, serviceFee FROM appointments ORDER BY appointmentDate DESC LIMIT 10";
-
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/redstone", "root", "");
-             PreparedStatement pst = conn.prepareStatement(sql);
-             ResultSet rs = pst.executeQuery()) {
-
-            ResultSetMetaData md = rs.getMetaData();
-            int colCount = md.getColumnCount();
-            String[] cols = new String[colCount];
-
-            for (int i = 0; i < colCount; i++) cols[i] = md.getColumnLabel(i + 1);
-
-            tableModel.setColumnIdentifiers(cols);
-            tableModel.setRowCount(0);
-
-            while (rs.next()) {
-                Object[] row = new Object[colCount];
-                for (int i = 0; i < colCount; i++) row[i] = rs.getObject(i + 1);
-                tableModel.addRow(row);
-            }
-
-        } catch (SQLException ex) {
-            System.out.println("Appointments Load Error: " + ex.getMessage());
-        }
-    }
-
-    // ================= LIVE CLOCK =================
-    private void startClock() {
-        timer = new Timer(1000, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                LocalDateTime now = LocalDateTime.now();
-                jLabelDate.setText("Date:   " + now.toLocalDate());
-                jLabelTime.setText("Time:  " + now.toLocalTime().withNano(0));
-            }
-        });
-        timer.start();
-    }
-
+        jLabelDate.setText("Date: " + today.toString());
+        jLabelTime.setText("Time: " + now.toString());
+    });
+    timer.start();
 }
 
     /**
@@ -244,11 +138,6 @@ public class AdminDash extends javax.swing.JFrame {
         jButton8.setBorder(null);
         jButton8.setBorderPainted(false);
         jButton8.setContentAreaFilled(false);
-        jButton8.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton8ActionPerformed(evt);
-            }
-        });
 
         jButton9.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jButton9.setForeground(new java.awt.Color(255, 255, 255));
@@ -256,11 +145,6 @@ public class AdminDash extends javax.swing.JFrame {
         jButton9.setBorder(null);
         jButton9.setBorderPainted(false);
         jButton9.setContentAreaFilled(false);
-        jButton9.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton9ActionPerformed(evt);
-            }
-        });
 
         jLabel1.setFont(new java.awt.Font("Verdana", 1, 14)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
@@ -273,11 +157,6 @@ public class AdminDash extends javax.swing.JFrame {
         jButton1.setBorder(null);
         jButton1.setBorderPainted(false);
         jButton1.setContentAreaFilled(false);
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
 
         jButton10.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jButton10.setForeground(new java.awt.Color(255, 255, 255));
@@ -285,11 +164,6 @@ public class AdminDash extends javax.swing.JFrame {
         jButton10.setBorder(null);
         jButton10.setBorderPainted(false);
         jButton10.setContentAreaFilled(false);
-        jButton10.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton10ActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
         jPanel8.setLayout(jPanel8Layout);
@@ -338,7 +212,7 @@ public class AdminDash extends javax.swing.JFrame {
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         jLabel2.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel2.setText("Welcome back");
+        jLabel2.setText("Hello Dr.");
 
         jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         jLabel3.setForeground(new java.awt.Color(255, 255, 255));
@@ -748,59 +622,50 @@ public class AdminDash extends javax.swing.JFrame {
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
         // TODO add your handling code here:
-      //  new addDoctor().setVisible(true);
-        //this.dispose();
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
         // TODO add your handling code here:
-       // new removePatient().setVisible(true);
-     //   this.dispose();
     }//GEN-LAST:event_jButton6ActionPerformed
 
     private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
         // TODO add your handling code here:
-        //new systemStats().setVisible(true);
-       // this.dispose();
     }//GEN-LAST:event_jButton7ActionPerformed
-
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
-       // new removeDoctor().setVisible(true);
-        //this.dispose();
-    }//GEN-LAST:event_jButton1ActionPerformed
-
-    private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed
-        // TODO add your handling code here:
-    //    new viewAppAdmin().setVisible(true);
-      //  this.dispose();
-    }//GEN-LAST:event_jButton10ActionPerformed
-
-    private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
-        // TODO add your handling code here:
-        new EditAdmin(adminId).setVisible(true);
-        this.dispose();
-    }//GEN-LAST:event_jButton8ActionPerformed
-
-    private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
-        // TODO add your handling code here:
-        /*int choice = JOptionPane.showConfirmDialog(
-                this,
-                "Are you sure you want to log out?",
-                "Confirm Logout",
-                JOptionPane.YES_NO_OPTION
-        );
-
-        if (choice == JOptionPane.YES_OPTION) {
-            new logIN().setVisible(true);
-            this.dispose();
-        }*/
-    }//GEN-LAST:event_jButton9ActionPerformed
 
     /**
      * @param args the command line arguments
      */
-    
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(AdminDash.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(AdminDash.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(AdminDash.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(AdminDash.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+
+        /* Create and display the form */
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                new AdminDash().setVisible(true);
+            }
+        });
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;

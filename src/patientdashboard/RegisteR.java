@@ -4,489 +4,214 @@
  */
 package patientdashboard;
 
-import util.DatabaseConnection;
-
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
-import java.awt.event.*;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
-import java.util.Random;
+import java.sql.DriverManager;
+
+
 
 /**
  *
  * @author bompe
  */
 public class RegisteR extends javax.swing.JFrame {
-    
-    // Additional runtime UI & state fields
-    private JPasswordField pwdPassword;           // runtime replacement for txtPassword
-    private JPasswordField pwdConfirmPassword;    // runtime replacement for txtConfirmPassword
-    private JLabel lblPasswordStrength;
-    private JDialog loadingDialog;
-    
     /**
      * Creates new form RegisteR
      */
     public RegisteR() {
         initComponents();
-        postInitComponents();           // our added setup (keeps generated block unchanged)
-
         addRealtimeValidation();
         setupDOBListener();
-        applyFadeInEffect();
     }
     
-    // Post init: swap password fields, add toggles, setup spinner, etc.
-    private void postInitComponents() {
-        swapTextFieldWithPasswordField();
+    // ------------------------------
+    // REALTIME VALIDATION
+    // ------------------------------
+    private void addRealtimeValidation() {
 
-        lblPasswordStrength = new JLabel(" ");
-        lblPasswordStrength.setFont(lblPasswordStrength.getFont().deriveFont(Font.PLAIN, 12f));
-        lblPasswordStrength.setForeground(Color.DARK_GRAY);
-        jPanel1.add(lblPasswordStrength);
-        lblPasswordStrength.setBounds(txtPassword.getX(), txtPassword.getY() + txtPassword.getHeight() + 4, 300, 18);
-
-        setupLoadingSpinner();
-        addPasswordShowHideToggles();
-
-        txtPhoneNumber.addFocusListener(new FocusAdapter() {
-            @Override public void focusLost(FocusEvent e) {
-                txtPhoneNumber.setText(formatPhoneNumber(txtPhoneNumber.getText()));
-            }
+        txtUsername.getDocument().addDocumentListener(new SimpleDocumentListener() {
+            @Override public void update() { validateUsername(); }
         });
 
-        txtIDNumber.getDocument().addDocumentListener(new SimpleDocListener(() -> {
-            autoDetectGenderFromID();
-            validateID();
-        }));
-
-        if (pwdPassword != null) {
-            pwdPassword.getDocument().addDocumentListener(new SimpleDocListener(() -> {
-                String pwd = new String(pwdPassword.getPassword());
-                lblPasswordStrength.setText("Strength: " + passwordStrengthLabel(pwd));
-            }));
-        }
-
-        applyModernBorders();
-
-        // Clear/correct label defaults
-        lblFirstNameError.setText("");
-        lblLastNameError.setText("");
-        lblEmailError.setText("");
-        lblDOBError.setText("");
-        lblPhoneError.setText("");
-        lblIDError.setText("");
-        lblUsernameError.setText("");
-        lblPasswordError.setText("");
-        lblConfirmError.setText("");
-        lblStatus.setText("");
-    }
-
-    // Replace generated JTextField password fields with JPasswordField instances at runtime
-    private void swapTextFieldWithPasswordField() {
-        try {
-            pwdPassword = new JPasswordField();
-            pwdConfirmPassword = new JPasswordField();
-
-            copyTextFieldProperties(txtPassword, pwdPassword);
-            copyTextFieldProperties(txtConfirmPassword, pwdConfirmPassword);
-
-            Container parent1 = txtPassword.getParent();
-            if (parent1 != null) {
-                parent1.remove(txtPassword);
-                parent1.add(pwdPassword);
-            }
-
-            Container parent2 = txtConfirmPassword.getParent();
-            if (parent2 != null) {
-                parent2.remove(txtConfirmPassword);
-                parent2.add(pwdConfirmPassword);
-            }
-
-            revalidate();
-            repaint();
-
-            // Keep original txtPassword synced if any generated code reads it
-            pwdPassword.getDocument().addDocumentListener(new SimpleDocListener(() ->
-                    txtPassword.setText(new String(pwdPassword.getPassword()))
-            ));
-            pwdConfirmPassword.getDocument().addDocumentListener(new SimpleDocListener(() ->
-                    txtConfirmPassword.setText(new String(pwdConfirmPassword.getPassword()))
-            ));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    private void copyTextFieldProperties(JTextField src, JPasswordField dest) {
-        dest.setColumns(src.getColumns());
-        dest.setFont(src.getFont());
-        dest.setBorder(src.getBorder());
-        dest.setBounds(src.getBounds());
-        dest.setPreferredSize(src.getPreferredSize());
-    }
-
-    private int findComponentIndex(Container parent, Component comp) {
-        Component[] children = parent.getComponents();
-        for (int i = 0; i < children.length; i++) if (children[i] == comp) return i;
-        return -1;
-    }
-
-    // Add show/hide toggles positioned relative to the original fields
-    private void addPasswordShowHideToggles() {
-        JButton toggle1 = new JButton("Show");
-        toggle1.setFocusable(false);
-        toggle1.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        toggle1.addActionListener(e -> {
-            if (pwdPassword == null) return;
-            if (pwdPassword.getEchoChar() == '\0') {
-                pwdPassword.setEchoChar((Character) UIManager.get("PasswordField.echoChar"));
-                toggle1.setText("Show");
-            } else {
-                pwdPassword.setEchoChar((char) 0);
-                toggle1.setText("Hide");
-            }
+        txtPassword.getDocument().addDocumentListener(new SimpleDocumentListener() {
+            @Override public void update() { validatePassword(); }
         });
-        jPanel1.add(toggle1);
 
-        JButton toggle2 = new JButton("Show");
-        toggle2.setFocusable(false);
-        toggle2.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        toggle2.addActionListener(e -> {
-            if (pwdConfirmPassword == null) return;
-            if (pwdConfirmPassword.getEchoChar() == '\0') {
-                pwdConfirmPassword.setEchoChar((Character) UIManager.get("PasswordField.echoChar"));
-                toggle2.setText("Show");
-            } else {
-                pwdConfirmPassword.setEchoChar((char) 0);
-                toggle2.setText("Hide");
-            }
+        txtConfirmPassword.getDocument().addDocumentListener(new SimpleDocumentListener() {
+            @Override public void update() { validateConfirmPassword(); }
         });
-        jPanel1.add(toggle2);
 
-        int buttonWidth = 60;
-        int buttonHeight = 30;
+        txtEmail.getDocument().addDocumentListener(new SimpleDocumentListener() {
+            @Override public void update() { validateEmail(); }
+        });
 
-        SwingUtilities.invokeLater(() -> {
-            try {
-                int px1 = txtPassword.getX() + txtPassword.getWidth() - buttonWidth - 8;
-                int py1 = txtPassword.getY() + (txtPassword.getHeight() - buttonHeight) / 2;
-                toggle1.setBounds(px1, py1, buttonWidth, buttonHeight);
+        txtPhoneNumber.getDocument().addDocumentListener(new SimpleDocumentListener() {
+            @Override public void update() { validatePhone(); }
+        });
 
-                int px2 = txtConfirmPassword.getX() + txtConfirmPassword.getWidth() - buttonWidth - 8;
-                int py2 = txtConfirmPassword.getY() + (txtConfirmPassword.getHeight() - buttonHeight) / 2;
-                toggle2.setBounds(px2, py2, buttonWidth, buttonHeight);
-            } catch (Exception ex) {
-                // fallback approximate positions
-                toggle1.setBounds(350, txtPassword.getY() + 5, buttonWidth, buttonHeight);
-                toggle2.setBounds(350, txtConfirmPassword.getY() + 5, buttonWidth, buttonHeight);
-            }
-            jPanel1.repaint();
+        txtIDNumber.getDocument().addDocumentListener(new SimpleDocumentListener() {
+            @Override public void update() { validateID(); }
         });
     }
 
-    // Loading spinner dialog
-    private void setupLoadingSpinner() {
-        loadingDialog = new JDialog(this, "Please wait...", true);
-        loadingDialog.setUndecorated(true);
-        loadingDialog.setSize(220, 100);
-        loadingDialog.setLayout(new BorderLayout());
-        loadingDialog.setLocationRelativeTo(this);
-
-        JLabel lbl = new JLabel("Processing...", SwingConstants.CENTER);
-        lbl.setBorder(BorderFactory.createEmptyBorder(8, 8, 4, 8));
-        JProgressBar bar = new JProgressBar();
-        bar.setIndeterminate(true);
-
-        loadingDialog.add(lbl, BorderLayout.NORTH);
-        loadingDialog.add(bar, BorderLayout.CENTER);
-    }
-
-    // Fade-in animation
-    private void applyFadeInEffect() {
-        try {
-            setOpacity(0f);
-            Timer t = new Timer(25, null);
-            final float[] op = {0f};
-            t.addActionListener(e -> {
-                op[0] += 0.07f;
-                if (op[0] >= 1f) {
-                    op[0] = 1f;
-                    setOpacity(1f);
-                    ((Timer)e.getSource()).stop();
-                } else {
-                    setOpacity(Math.min(1f, op[0]));
-                }
-            });
-            t.start();
-        } catch (Exception ignored) { }
-    }
-
-    // DOB listener & age calculation
+    // ------------------------------
+    // AUTO CALCULATE AGE FROM DOB
+    // ------------------------------
     private void setupDOBListener() {
-        dateChooserDOB.addPropertyChangeListener("date", evt -> {
-            int age = calculateAgeFromDOB();
-            lblDOBError.setText(age >= 0 ? ("Age: " + age) : "");
-        });
+        dateChooserDOB.addPropertyChangeListener("date", evt -> calculateAgeFromDOB());
     }
 
     private int calculateAgeFromDOB() {
-        if (dateChooserDOB.getDate() == null) return -1;
+        if (dateChooserDOB.getDate() == null) {
+            return -1;
+        }
+
         java.util.Date dob = dateChooserDOB.getDate();
-        LocalDate birth = dob.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        int age = Period.between(birth, LocalDate.now()).getYears();
-        if (age < 0 || age > 120) return -1;
-        return age;
+        LocalDate birthDate = dob.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+
+        return Period.between(birthDate, LocalDate.now()).getYears();
     }
 
-    // Realtime validation wiring
-    private void addRealtimeValidation() {
-        txtUsername.getDocument().addDocumentListener(new SimpleDocListener(this::validateUsername));
-        txtPassword.getDocument().addDocumentListener(new SimpleDocListener(this::validatePassword));
-        txtConfirmPassword.getDocument().addDocumentListener(new SimpleDocListener(this::validateConfirmPassword));
-        txtEmail.getDocument().addDocumentListener(new SimpleDocListener(this::validateEmail));
-        txtPhoneNumber.getDocument().addDocumentListener(new SimpleDocListener(this::validatePhone));
-        txtIDNumber.getDocument().addDocumentListener(new SimpleDocListener(this::validateID));
-    }
 
-    // Validation methods (strict email)
+    // ------------------------------
+    // VALIDATION RULES
+    // ------------------------------
     private boolean validateUsername() {
-        String u = txtUsername.getText().trim();
-        if (u.isEmpty()) { lblUsernameError.setText("Username required"); setFieldErrorVisual(txtUsername, true); return false; }
-        lblUsernameError.setText(""); setFieldErrorVisual(txtUsername, false); return true;
+        if (txtUsername.getText().trim().isEmpty()) {
+            lblUsernameError.setText("Username required");
+            return false;
+        }
+        lblUsernameError.setText("");
+        return true;
     }
 
     private boolean validatePassword() {
-        String pass = pwdPassword != null ? new String(pwdPassword.getPassword()) : txtPassword.getText();
-        if (pass.trim().length() < 6) { lblPasswordError.setText("Min 6 characters"); setFieldErrorVisual(getPasswordFieldVisual(), true); return false; }
-        lblPasswordError.setText(""); setFieldErrorVisual(getPasswordFieldVisual(), false); return true;
+        if (txtPassword.getText().trim().length() < 6) {
+            lblPasswordError.setText("Min 6 characters");
+            return false;
+        }
+        lblPasswordError.setText("");
+        return true;
     }
 
     private boolean validateConfirmPassword() {
-        String pass = pwdPassword != null ? new String(pwdPassword.getPassword()) : txtPassword.getText();
-        String conf = pwdConfirmPassword != null ? new String(pwdConfirmPassword.getPassword()) : txtConfirmPassword.getText();
-        if (!pass.equals(conf)) { lblConfirmError.setText("Passwords do not match"); setFieldErrorVisual(getConfirmPasswordFieldVisual(), true); return false; }
-        lblConfirmError.setText(""); setFieldErrorVisual(getConfirmPasswordFieldVisual(), false); return true;
+        if (!txtPassword.getText().equals(txtConfirmPassword.getText())) {
+            lblConfirmError.setText("Passwords do not match");
+            return false;
+        }
+        lblConfirmError.setText("");
+        return true;
     }
 
-    // Strict email validation (choice 3)
     private boolean validateEmail() {
-        String email = txtEmail.getText().trim();
-        if (email.isEmpty()) { lblEmailError.setText(""); setFieldErrorVisual(txtEmail, false); return true; } // optional but validate if present
-        String regex = "^(?![.-])[A-Za-z0-9._%+-]{2,64}@(?!-)[A-Za-z0-9.-]+\\.[A-Za-z]{2,10}$";
-        if (!email.matches(regex)) {
+        if (!txtEmail.getText().trim().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
             lblEmailError.setText("Invalid email");
-            setFieldErrorVisual(txtEmail, true);
             return false;
         }
         lblEmailError.setText("");
-        setFieldErrorVisual(txtEmail, false);
         return true;
     }
 
     private boolean validatePhone() {
-        String ph = txtPhoneNumber.getText().trim();
-        if (!ph.matches("\\d{9,13}|(\\d{3}[- ]?\\d{3}[- ]?\\d{3,4})")) { lblPhoneError.setText("Invalid phone"); setFieldErrorVisual(txtPhoneNumber, true); return false; }
-        lblPhoneError.setText(""); setFieldErrorVisual(txtPhoneNumber, false); return true;
+        if (!txtPhoneNumber.getText().trim().matches("\\d{10,13}")) {
+            lblPhoneError.setText("Invalid phone");
+            return false;
+        }
+        lblPhoneError.setText("");
+        return true;
     }
 
     private boolean validateID() {
-        String id = txtIDNumber.getText().trim();
-        if (id.length() < 6) { lblIDError.setText("Invalid ID"); setFieldErrorVisual(txtIDNumber, true); return false; }
-        lblIDError.setText(""); setFieldErrorVisual(txtIDNumber, false); return true;
-    }
-
-    private void setFieldErrorVisual(Component comp, boolean error) {
-        if (!(comp instanceof JComponent)) return;
-        JComponent jc = (JComponent) comp;
-        if (error) jc.setBorder(new LineBorder(Color.RED, 2));
-        else jc.setBorder(new LineBorder(new Color(0, 121, 151), 2, true));
-    }
-
-    private Component getPasswordFieldVisual() { return pwdPassword != null ? pwdPassword : txtPassword; }
-    private Component getConfirmPasswordFieldVisual() { return pwdConfirmPassword != null ? pwdConfirmPassword : txtConfirmPassword; }
-
-    // Password strength
-    private String passwordStrengthLabel(String pwd) {
-        if (pwd == null || pwd.isEmpty()) return "Empty";
-        int score = 0;
-        if (pwd.length() >= 8) score++;
-        if (pwd.matches("(?=.*[0-9]).*")) score++;
-        if (pwd.matches("(?=.*[A-Z]).*")) score++;
-        if (pwd.matches("(?=.*[!@#$%^&*()_+\\-=[\\]{};':\"\\\\|,.<>/?]).*")) score++;
-        switch (score) {
-            case 0: case 1: return "Weak";
-            case 2: return "Fair";
-            case 3: return "Good";
-            default: return "Strong";
+        if (txtIDNumber.getText().trim().length() < 6) {
+            lblIDError.setText("Invalid ID");
+            return false;
         }
+        lblIDError.setText("");
+        return true;
     }
 
-    // Phone formatting helper
-    private String formatPhoneNumber(String raw) {
-        String digits = raw.replaceAll("\\D", "");
-        if (digits.length() <= 3) return digits;
-        if (digits.length() <= 6) return digits.substring(0, 3) + "-" + digits.substring(3);
-        if (digits.length() <= 10) return digits.substring(0, 3) + "-" + digits.substring(3, 6) + "-" + digits.substring(6);
-        return digits;
-    }
 
-    // Auto detect gender from SA ID number
-    private void autoDetectGenderFromID() {
-        String id = txtIDNumber.getText().trim();
-        if (id.length() >= 7 && id.matches("\\d+")) {
-            char c = id.charAt(6);
-            int digit = Character.getNumericValue(c);
-            if (digit >= 5) cmbGender.setSelectedItem("Male");
-            else cmbGender.setSelectedItem("Female");
-        }
-    }
-
-    // Duplicate checks
-    private boolean isDuplicate(String column, String value) {
-        String sql = "SELECT 1 FROM patients WHERE " + column + " = ? LIMIT 1";
-        try (Connection conn = getConnectionSafe();
-             PreparedStatement pst = conn.prepareStatement(sql)) {
-            pst.setString(1, value);
-            try (ResultSet rs = pst.executeQuery()) {
-                return rs.next();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return true;
-        }
-    }
-
-    // Register (called by generated button)
+    // ------------------------------
+    // SUBMIT BUTTON — SAVE TO MYSQL
+    // ------------------------------
     private void registerUser() {
-        boolean ok = validateUsername() & validatePassword() & validateConfirmPassword()
-                & validateEmail() & validatePhone() & validateID();
-        if (!ok) { lblStatus.setText("Fix errors before submitting"); return; }
+        if (!validateUsername() || !validatePassword() || !validateConfirmPassword()
+                || !validateEmail() || !validatePhone() || !validateID()) {
+            lblStatus.setText("Fix errors before submitting");
+            return;
+        }
 
-        if (dateChooserDOB.getDate() == null) { lblStatus.setText("Select a valid Date of Birth"); return; }
+        if (dateChooserDOB.getDate() == null) {
+            lblStatus.setText("Select a valid Date of Birth");
+            return;
+        }
 
         int age = calculateAgeFromDOB();
-        if (age < 0) { lblStatus.setText("Invalid Date of Birth"); return; }
+        if (age < 0 || age > 120) {
+            lblStatus.setText("Invalid Date of Birth");
+            return;
+        }
 
-        final String username = txtUsername.getText().trim();
-        final String email = txtEmail.getText().trim();
-        final String idNumber = txtIDNumber.getText().trim();
-        final String genderSelected = (cmbGender.getSelectedItem() == null) ? "MALE" : cmbGender.getSelectedItem().toString().toUpperCase();
-        final String genderForDb = genderSelected.equals("MALE") ? "MALE" : "FEMALE";
-        final int finalAge = age;
-        final String phone = txtPhoneNumber.getText().trim();
-        final String password = pwdPassword != null ? new String(pwdPassword.getPassword()) : txtPassword.getText();
+        String sql = "INSERT INTO patients "
+                + "(username, password, firstName, lastName, gender, age, email, phone, dateOfBirth, idNumber) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        // Duplicate checks
-        if (isDuplicate("username", username)) { lblStatus.setText("Username already exists."); return; }
-        if (!email.isEmpty() && isDuplicate("email", email)) { lblStatus.setText("Email already registered."); return; }
-        if (!idNumber.isEmpty() && isDuplicate("idNumber", idNumber)) { lblStatus.setText("ID/Passport already registered."); return; }
+        try (Connection conn = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/redstone", "root", "");
+             PreparedStatement pst = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-        // Insert in DB in background thread
-        SwingWorker<Integer, Void> worker = new SwingWorker<>() {
-            @Override
-            protected Integer doInBackground() {
-                SwingUtilities.invokeLater(() -> loadingDialog.setVisible(true));
-                int newId = -1;
-                String sql = "INSERT INTO patients (username, password, firstName, lastName, gender, age, email, phone, dateOfBirth, idNumber) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                try (Connection conn = getConnectionSafe();
-                     PreparedStatement pst = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            pst.setString(1, txtUsername.getText());
+            pst.setString(2, txtPassword.getText());
+            pst.setString(3, txtFirstName.getText());
+            pst.setString(4, txtLastName.getText());
+            pst.setString(5, cmbGender.getSelectedItem().toString());
+            pst.setInt(6, age);
+            pst.setString(7, txtEmail.getText());
+            pst.setString(8, txtPhoneNumber.getText());
 
-                    pst.setString(1, username);
-                    pst.setString(2, password); // plaintext as requested
-                    pst.setString(3, txtFirstName.getText().trim());
-                    pst.setString(4, txtLastName.getText().trim());
-                    pst.setString(5, genderForDb);
-                    pst.setInt(6, finalAge);
-                    pst.setString(7, email);
-                    pst.setString(8, phone);
-                    java.util.Date dob = dateChooserDOB.getDate();
-                    pst.setDate(9, new java.sql.Date(dob.getTime()));
-                    pst.setString(10, idNumber);
+            java.util.Date dob = dateChooserDOB.getDate();
+            pst.setDate(9, new java.sql.Date(dob.getTime()));
 
-                    pst.executeUpdate();
-                    try (ResultSet rs = pst.getGeneratedKeys()) {
-                        if (rs.next()) newId = rs.getInt(1);
-                    }
+            pst.setString(10, txtIDNumber.getText());
 
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    return -2;
-                } finally {
-                    SwingUtilities.invokeLater(() -> loadingDialog.setVisible(false));
-                }
-                return newId;
+            pst.executeUpdate();
+
+            // Get auto-generated patient ID
+            ResultSet rs = pst.getGeneratedKeys();
+            int newId = -1;
+            if (rs.next()) {
+                newId = rs.getInt(1);
             }
 
-            @Override
-            protected void done() {
-                try {
-                    int res = get();
-                    if (res == -2) {
-                        lblStatus.setText("Database error during registration.");
-                    } else if (res > 0) {
-                        lblStatus.setText("Registered Successfully!");
-                        JOptionPane.showMessageDialog(RegisteR.this, "Registration successful. Welcome " + txtFirstName.getText() + "!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                        try {
-                            patientsDash dash = new patientsDash(res, txtUsername.getText().trim());
-                            dash.setLocationRelativeTo(null);
-                            dash.setVisible(true);
-                            dispose();
-                        } catch (Exception ex) {
-                            new patientsDash().setVisible(true);
-                            dispose();
-                        }
-                    } else {
-                        lblStatus.setText("Unknown error occurred.");
-                    }
-                } catch (Exception ex) {
-                    lblStatus.setText("Unexpected error: " + ex.getMessage());
-                }
-            }
-        };
+            lblStatus.setText("Registered Successfully!");
 
-        worker.execute();
-    }
+            // OPEN patient dashboard
+            patientsDash dash = new patientsDash(newId, txtUsername.getText());
+            dash.setVisible(true);
+            this.dispose();
 
-    // DB connection helper
-    private Connection getConnectionSafe() throws SQLException {
-        try {
-            return DatabaseConnection.getConnection();
-        } catch (Throwable t) {
-            String url = "jdbc:mysql://localhost:3306/redstone";
-            String user = "root";
-            String pass = "";
-            return DriverManager.getConnection(url, user, pass);
+        } catch (Exception e) {
+            lblStatus.setText("Error: " + e.getMessage());
         }
     }
 
-    // Apply nice borders
-    private void applyModernBorders() {
-        LineBorder b = new LineBorder(new Color(0, 121, 151), 2, true);
-        txtFirstName.setBorder(b);
-        txtLastName.setBorder(b);
-        txtEmail.setBorder(b);
-        txtPhoneNumber.setBorder(b);
-        txtIDNumber.setBorder(b);
-        txtUsername.setBorder(b);
-        txtPassword.setBorder(b);
-        txtConfirmPassword.setBorder(b);
-    }
-
-    // Document listener template
-    private interface SimpleDocListener extends DocumentListener {
+    
+    // ------------------------------
+    // Simple Listener Class
+    // ------------------------------
+    private interface SimpleDocumentListener extends DocumentListener {
         void update();
         @Override default void insertUpdate(DocumentEvent e) { update(); }
         @Override default void removeUpdate(DocumentEvent e) { update(); }
         @Override default void changedUpdate(DocumentEvent e) { update(); }
     }
-
 
 
     /**
@@ -602,7 +327,7 @@ public class RegisteR extends javax.swing.JFrame {
             }
         });
 
-        cmbGender.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Select gender", "Male", "Female" }));
+        cmbGender.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Male", "Female" }));
         cmbGender.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 121, 151), 2, true));
 
         lblFirstNameError.setText("Password:");

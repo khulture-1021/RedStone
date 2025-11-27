@@ -4,9 +4,6 @@
  */
 package patientdashboard;
 
-import javax.swing.*;
-import java.awt.*;
-
 /**
  *
  * @author bompe
@@ -74,41 +71,21 @@ public class splash extends javax.swing.JFrame {
      */
    
      public static void main(String[] args) {
-        // Create and show splash on EDT, then use SwingWorker to update progress safely
-        EventQueue.invokeLater(() -> {
-            splash screen = new splash();
-            // show the screen (initComponents already set a size)
-            screen.setVisible(true);
-
-            SwingWorker<Void, Integer> worker = new SwingWorker<>() {
-                @Override
-                protected Void doInBackground() throws Exception {
-                    for (int i = 0; i <= 100; i++) {
-                        Thread.sleep(20);
-                        publish(i);
-                    }
-                    return null;
+        splash screen=new splash();
+        screen.setVisible(true);
+        try{
+           
+            for (int i = 0;i <= 100;i++){
+                 Thread.sleep(20);
+                splash.jProgressBar1.setValue(i);
+                if(i==100){
+                    new logIN().setVisible(true);
+                    screen.dispose();
                 }
-
-                @Override
-                protected void process(java.util.List<Integer> chunks) {
-                    // update with the latest published value on EDT
-                    int val = chunks.get(chunks.size() - 1);
-                    screen.jProgressBar1.setValue(val);
-                }
-
-                @Override
-                protected void done() {
-                    // after loading completes, open the login screen on the EDT
-                    EventQueue.invokeLater(() -> {
-                        new logIN().setVisible(true);
-                        screen.dispose();
-                    });
-                }
-            };
-
-            worker.execute();
-        });
+            }
+        }catch(Exception e){
+            
+        }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
