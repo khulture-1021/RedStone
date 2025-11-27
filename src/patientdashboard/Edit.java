@@ -8,6 +8,7 @@ import util.DatabaseConnection;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.EventQueue;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.sql.*;
@@ -30,11 +31,23 @@ public class Edit extends javax.swing.JFrame {
         this.patientId = patientId;
         this.username = username;
         initComponents();
+        // standardize close behavior
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setup();
         loadAllData();
     }
 
     private void setup() {
+        // clear status / errors initially
+        lblStatus.setText("");
+        lblFirstNameError.setText("");
+        lblLastNameError.setText("");
+        lblEmailError.setText("");
+        lblPhoneError.setText("");
+        lblDOBError.setText("");
+        lblAddressError.setText("");
+        lblBloodError.setText("");
+
         // fill combos
         cmbGender.removeAllItems();
         cmbGender.addItem("MALE");
@@ -52,20 +65,31 @@ public class Edit extends javax.swing.JFrame {
         cmbBloodGroup.addItem("O-");
 
         // listeners
-        btnSave.addActionListener(e -> saveChanges());
+        btnSave.addActionListener(e -> saveChangesBackground());
         btnDashboard.addActionListener(e -> {
-            patientsDash dash = new patientsDash(patientId, username);
-            dash.setVisible(true);
-            this.dispose();
+            // navigate back to dashboard on EDT
+            EventQueue.invokeLater(() -> {
+                patientsDash dash = new patientsDash(patientId, username);
+                dash.pack();
+                dash.setLocationRelativeTo(null);
+                dash.setVisible(true);
+                this.dispose();
+            });
         });
 
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                try {
-                    patientsDash dash = new patientsDash(patientId, username);
-                    dash.setVisible(true);
-                } catch (Exception ex) { /* ignore */ }
+                EventQueue.invokeLater(() -> {
+                    try {
+                        patientsDash dash = new patientsDash(patientId, username);
+                        dash.pack();
+                        dash.setLocationRelativeTo(null);
+                        dash.setVisible(true);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                });
             }
         });
     }
@@ -132,6 +156,8 @@ public class Edit extends javax.swing.JFrame {
                         rowData[5] = rs.getString("phone");
                         rowData[6] = rs.getString("dateOfBirth");
                         rowData[7] = rs.getString("address");
+                    } else {
+                        lblStatus.setText("User not found.");
                     }
                 }
             }
@@ -142,7 +168,8 @@ public class Edit extends javax.swing.JFrame {
                 pst2.setInt(1, this.patientId);
                 try (ResultSet rs2 = pst2.executeQuery()) {
                     if (rs2.next()) {
-                        cmbBloodGroup.setSelectedItem(rs2.getString("bloodType"));
+                        String bt = rs2.getString("bloodType");
+                        cmbBloodGroup.setSelectedItem(bt != null ? bt : "Unknown");
                         txtAllergies.setText(rs2.getString("allergies"));
 
                         rowData[8] = rs2.getString("bloodType");
@@ -161,6 +188,7 @@ public class Edit extends javax.swing.JFrame {
 
         } catch (Exception e) {
             lblStatus.setText("Load error: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -216,13 +244,8 @@ public class Edit extends javax.swing.JFrame {
         return ok;
     }
 
-    // Save updates to DB
-    private void saveChanges() {
-        if (!validateFields()) {
-            lblStatus.setText("Fix errors and try again.");
-            return;
-        }
-
+    // Perform DB update (used from background thread)
+    private String performSave() {
         try (Connection conn = DatabaseConnection.getConnection()) {
 
             // Update patients
@@ -266,16 +289,53 @@ public class Edit extends javax.swing.JFrame {
                 }
             }
 
-            lblStatus.setForeground(java.awt.Color.GREEN.darker());
-            lblStatus.setText("Saved successfully.");
-
-            // refresh top table
-            loadAllData();
-
+            return null; // null => success
         } catch (Exception e) {
-            lblStatus.setForeground(java.awt.Color.red);
-            lblStatus.setText("Save error: " + e.getMessage());
+            e.printStackTrace();
+            return e.getMessage();
         }
+    }
+
+    // Save updates to DB using a SwingWorker (background thread)
+    private void saveChangesBackground() {
+        if (!validateFields()) {
+            lblStatus.setText("Fix errors and try again.");
+            return;
+        }
+
+        btnSave.setEnabled(false);
+        lblStatus.setForeground(java.awt.Color.BLACK);
+        lblStatus.setText("Saving...");
+
+        SwingWorker<String, Void> worker = new SwingWorker<>() {
+            @Override
+            protected String doInBackground() {
+                return performSave();
+            }
+
+            @Override
+            protected void done() {
+                btnSave.setEnabled(true);
+                try {
+                    String err = get();
+                    if (err == null) {
+                        lblStatus.setForeground(java.awt.Color.GREEN.darker());
+                        lblStatus.setText("Saved successfully.");
+                        // refresh top table
+                        loadAllData();
+                    } else {
+                        lblStatus.setForeground(java.awt.Color.red);
+                        lblStatus.setText("Save error: " + err);
+                    }
+                } catch (Exception e) {
+                    lblStatus.setForeground(java.awt.Color.red);
+                    lblStatus.setText("Unexpected save error: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        worker.execute();
     }
 
     /**
@@ -395,6 +455,11 @@ public class Edit extends javax.swing.JFrame {
         jButton7.setBorder(null);
         jButton7.setBorderPainted(false);
         jButton7.setContentAreaFilled(false);
+        jButton7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -700,24 +765,43 @@ public class Edit extends javax.swing.JFrame {
 
     private void btnDashboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDashboardActionPerformed
         // TODO add your handling code here:
-        new patientsDash(patientId, username).setVisible(true);
-        dispose();
+        new patientsDash(patientId, username).pack();
+            new patientsDash(patientId, username).setLocationRelativeTo(null);
+            new patientsDash(patientId, username).setVisible(true);
+            dispose();
     }//GEN-LAST:event_btnDashboardActionPerformed
 
     private void NavBtnBookAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnBookAppointmentActionPerformed
         // TODO add your handling code here:
-
+         BookAppointment b = new BookAppointment(patientId, username);
+            b.pack();
+            b.setLocationRelativeTo(this);
+            b.setVisible(true);
     }//GEN-LAST:event_NavBtnBookAppointmentActionPerformed
 
     private void NavBtnCancelAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnCancelAppointmentActionPerformed
         // TODO add your handling code here:
-
+        Cancel c = new Cancel(patientId, username);
+            c.pack();
+            c.setLocationRelativeTo(this);
+            c.setVisible(true);
     }//GEN-LAST:event_NavBtnCancelAppointmentActionPerformed
 
     private void NavBtnMedicalHistoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnMedicalHistoryActionPerformed
         // TODO add your handling code here:
-
+        History h = new History(patientId, username);
+            h.pack();
+            h.setLocationRelativeTo(this);
+            h.setVisible(true);
     }//GEN-LAST:event_NavBtnMedicalHistoryActionPerformed
+
+    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+        // TODO add your handling code here:
+        Helpframe help = new HelpFrame(patientId, username);
+            help.pack();
+            help.setLocationRelativeTo(this);
+            help.setVisible(true);
+    }//GEN-LAST:event_jButton7ActionPerformed
 
     /**
      * @param args the command line arguments

@@ -12,6 +12,7 @@ import java.time.LocalTime;
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
 import util.DatabaseConnection;
+import java.awt.EventQueue;
 
 /**
  *
@@ -34,46 +35,48 @@ public class patientsDash extends javax.swing.JFrame {
         loadPatientInfo();
         startClock();
     }
-     private void startClock() {
-    Timer timer = new Timer(1000, e -> {
-        LocalDate today = LocalDate.now();
-        LocalTime now = LocalTime.now().withNano(0);
+    
+    private void startClock() {
+        Timer timer = new Timer(1000, e -> {
+            LocalDate today = LocalDate.now();
+            LocalTime now = LocalTime.now().withNano(0);
 
-        jLabelDate.setText("Date: " + today.toString());
-        jLabelTime.setText("Time: " + now.toString());
-    });
-    timer.start();
-}
+            jLabelDate.setText("Date: " + today.toString());
+            jLabelTime.setText("Time: " + now.toString());
+        });
+        timer.start();
+    }
 
-    private void loadPatientInfo() {
+     private void loadPatientInfo() {
+        // Use try-with-resources for PreparedStatement and ResultSet so they are closed
         try (Connection conn = DatabaseConnection.getConnection()) {
 
             String sql = "SELECT * FROM patients WHERE username = ?";
-            PreparedStatement pst = conn.prepareStatement(sql);
-            pst.setString(1, username);
+            try (PreparedStatement pst = conn.prepareStatement(sql)) {
+                pst.setString(1, username);
+                try (ResultSet rs = pst.executeQuery()) {
+                    if (rs.next()) {
+                        // Save patientId if needed
+                        patientId = rs.getInt("patientId");
 
-            ResultSet rs = pst.executeQuery();
-
-            if (rs.next()) {
-                // Save patientId if needed
-                patientId = rs.getInt("patientId");
-
-                // Set labels
-                lblWelcome.setText("Welcome, " + rs.getString("firstName") + "!");
-                lblIDNumber.setText(rs.getString("idNumber"));
-                lblGender.setText(rs.getString("gender"));
-                lblEmail.setText(rs.getString("email"));
-                lblPhone.setText(rs.getString("phone"));
-
-                // If you have a display for DOB or Age:
-                // lblDOB.setText(rs.getString("dateOfBirth"));
-                // lblAge.setText(String.valueOf(rs.getInt("age")));
+                        // Set labels
+                        lblWelcome.setText("Welcome, " + rs.getString("firstName") + "!");
+                        lblIDNumber.setText(rs.getString("idNumber"));
+                        lblGender.setText(rs.getString("gender"));
+                        lblEmail.setText(rs.getString("email"));
+                        lblPhone.setText(rs.getString("phone"));
+                    } else {
+                        lblWelcome.setText("User not found.");
+                    }
+                }
             }
 
         } catch (Exception e) {
             lblWelcome.setText("DB Error: " + e.getMessage());
+            e.printStackTrace();
         }
     }
+
 
 
 
@@ -774,38 +777,53 @@ public class patientsDash extends javax.swing.JFrame {
 
     private void NavBtnMedicalHistoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnMedicalHistoryActionPerformed
         // TODO add your handling code here:
-        
+        History h = new History(patientId, username);
+            h.pack();
+            h.setLocationRelativeTo(this);
+            h.setVisible(true); 
     }//GEN-LAST:event_NavBtnMedicalHistoryActionPerformed
 
     private void NavBtnBookAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnBookAppointmentActionPerformed
         // TODO add your handling code here:
         BookAppointment book = new BookAppointment(patientId, username);
-        book.setVisible(true);
+            book.pack();
+            book.setLocationRelativeTo(this);
+            book.setVisible(true);
 
     }//GEN-LAST:event_NavBtnBookAppointmentActionPerformed
 
     private void NavBtnCancelAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnCancelAppointmentActionPerformed
         // TODO add your handling code here:
-        
+        Cancel c = new Cancel(patientId, username);
+            c.pack();
+            c.setLocationRelativeTo(this);
+            c.setVisible(true);
     }//GEN-LAST:event_NavBtnCancelAppointmentActionPerformed
 
     private void NavBtnEditProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnEditProfileActionPerformed
         // TODO add your handling code here:
         Edit edit = new Edit(patientId, username);
-        edit.setVisible(true);
-        
+            edit.pack();
+            edit.setLocationRelativeTo(this);
+            edit.setVisible(true);
     }//GEN-LAST:event_NavBtnEditProfileActionPerformed
 
     private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
         // TODO add your handling code here:                                       
-         int confirm = JOptionPane.showConfirmDialog(this,
+        // Confirm logout and navigate back to login on EDT
+        int confirm = JOptionPane.showConfirmDialog(this,
                 "Are you sure you want to logout?",
                 "Confirm Logout",
                 JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
-            new logIN().setVisible(true);
-            dispose();
+            EventQueue.invokeLater(() -> {
+                logIN login = new logIN();
+                login.pack();
+                login.setLocationRelativeTo(null);
+                login.setVisible(true);
+                dispose();
+            });
         }
     }//GEN-LAST:event_jButton8ActionPerformed
 

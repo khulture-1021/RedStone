@@ -31,8 +31,13 @@ public class Cancel extends javax.swing.JFrame {
         applyStatusColorRenderer();
         setupButtons();
         
-        tblAppointments.getColumnModel().getColumn(0).setMinWidth(0);
-        tblAppointments.getColumnModel().getColumn(0).setMaxWidth(0);
+        // hide appointmentId column if present (keeps existing behavior)
+        try {
+            tblAppointments.getColumnModel().getColumn(0).setMinWidth(0);
+            tblAppointments.getColumnModel().getColumn(0).setMaxWidth(0);
+        } catch (Exception ex) {
+            // ignore if column not present
+        }
     }
     
     private void setupButtons() {
@@ -52,7 +57,7 @@ public class Cancel extends javax.swing.JFrame {
             }
         });
     }
-    
+
     private void applyStatusColorRenderer() {
         tblAppointments.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
 
@@ -84,7 +89,6 @@ public class Cancel extends javax.swing.JFrame {
             }
         });
     }
-
 
     /** -----------------------------
      * LOAD ALL APPOINTMENTS
@@ -135,10 +139,12 @@ public class Cancel extends javax.swing.JFrame {
                 };
 
                 if (addRow) {
+                    // include appointmentId as first column so cancel uses it
                     model.addRow(new Object[]{
+                            rs.getInt("appointmentId"),
                             rs.getDate("appointmentDate"),
-                            rs.getString("reason"),
                             rs.getString("doctorName"),
+                            rs.getString("reason"),
                             computedStatus
                     });
                 }
@@ -148,7 +154,6 @@ public class Cancel extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Error loading appointments: " + e.getMessage());
         }
     }
-
 
     /** -----------------------------
      * CANCEL APPOINTMENT
@@ -162,8 +167,18 @@ public class Cancel extends javax.swing.JFrame {
             return;
         }
 
-        int appointmentId = (int) tblAppointments.getValueAt(row, 0);
-        String status = tblAppointments.getValueAt(row, 4).toString();
+        // convert view index to model if sorting/filtering applied
+        int modelRow = tblAppointments.convertRowIndexToModel(row);
+
+        int appointmentId;
+        try {
+            appointmentId = (int) tblAppointments.getModel().getValueAt(modelRow, 0);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Unable to determine appointment id.");
+            return;
+        }
+
+        String status = String.valueOf(tblAppointments.getModel().getValueAt(modelRow, 4));
 
         if (status.equalsIgnoreCase("CANCELLED")) {
             JOptionPane.showMessageDialog(this,
@@ -185,6 +200,13 @@ public class Cancel extends javax.swing.JFrame {
 
             pst.setInt(1, appointmentId);
             pst.executeUpdate();
+
+            // Notify other frames that appointments changed for this patient
+            try {
+                AppointmentNotifier.getInstance().notifyChange(patientId);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
 
             JOptionPane.showMessageDialog(this, "Appointment cancelled.");
             loadAppointments(); // refresh table

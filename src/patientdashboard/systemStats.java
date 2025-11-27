@@ -4,6 +4,11 @@
  */
 package patientdashboard;
 
+import java.sql.*;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+
+
 /**
  *
  * @author bompe
@@ -15,7 +20,165 @@ public class systemStats extends javax.swing.JFrame {
      */
     public systemStats() {
         initComponents();
+        loadStats();
     }
+    
+    private void loadStats() {
+        loadTotalDoctors();
+        loadTotalPatients();
+        loadRevenue();
+        loadMostActiveDoctor();
+        loadCancellations();
+        loadCommonDiagnosis();
+        loadNewAccounts();
+        loadDoctorAvailability();
+    }
+    
+    private void loadTotalDoctors() {
+        String sql = "SELECT COUNT(*) FROM doctors";
+
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/redstone", "root", "");
+             PreparedStatement pst = conn.prepareStatement(sql);
+             ResultSet rs = pst.executeQuery()) {
+
+            if (rs.next()) {
+                lblTotalDoctors.setText(rs.getString(1));
+            }
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error loading total doctors: " + ex.getMessage());
+        }
+    }
+
+    private void loadTotalPatients() {
+        String sql = "SELECT COUNT(*) FROM patients";
+
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/redstone", "root", "");
+             PreparedStatement pst = conn.prepareStatement(sql);
+             ResultSet rs = pst.executeQuery()) {
+
+            if (rs.next()) {
+                lblTotalPatients.setText(rs.getString(1));
+            }
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error loading total patients: " + ex.getMessage());
+        }
+    }
+    
+    private void loadRevenue() {
+        String sql = "SELECT SUM(amount) FROM payments";
+
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/redstone", "root", "");
+             PreparedStatement pst = conn.prepareStatement(sql);
+             ResultSet rs = pst.executeQuery()) {
+
+            if (rs.next()) {
+                lblRevenue.setText("$" + rs.getString(1));
+            }
+
+        } catch (SQLException ex) {
+            lblRevenue.setText("$0");
+        }
+    }
+
+    private void loadMostActiveDoctor() {
+        String sql = "SELECT d.firstName, d.lastName FROM appointments a JOIN doctors d ON a.doctorId = d.doctorId GROUP BY a.doctorId ORDER BY COUNT(*) DESC LIMIT 1";
+
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/redstone", "root", "");
+             PreparedStatement pst = conn.prepareStatement(sql);
+             ResultSet rs = pst.executeQuery()) {
+
+            if (rs.next()) {
+                lblMostActiveDoctor.setText(rs.getString(1) + " " + rs.getString(2));
+            }
+
+        } catch (SQLException ex) {
+            lblMostActiveDoctor.setText("N/A");
+        }
+    }
+    
+    private void loadCancellations() {
+        String sql = "SELECT COUNT(*) FROM appointments WHERE status='Cancelled'";
+
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/redstone", "root", "");
+             PreparedStatement pst = conn.prepareStatement(sql);
+             ResultSet rs = pst.executeQuery()) {
+
+            if (rs.next()) {
+                lblCancellations.setText(rs.getString(1));
+            }
+
+        } catch (SQLException ex) {
+            lblCancellations.setText("0");
+        }
+    }
+
+    private void loadCommonDiagnosis() {
+        String sql = "SELECT diagnosis FROM appointments GROUP BY diagnosis ORDER BY COUNT(*) DESC LIMIT 1";
+
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/redstone", "root", "");
+             PreparedStatement pst = conn.prepareStatement(sql);
+             ResultSet rs = pst.executeQuery()) {
+
+            if (rs.next()) {
+                lblCommonDiagnosis.setText(rs.getString(1));
+            }
+
+        } catch (SQLException ex) {
+            lblCommonDiagnosis.setText("N/A");
+        }
+    }
+
+    
+    private void loadDoctorAvailability() {
+        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+        model.setRowCount(0);
+
+        String sql = "SELECT firstName, status FROM doctors";
+
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/redstone", "root", "");
+             PreparedStatement pst = conn.prepareStatement(sql);
+             ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                model.addRow(new Object[]{
+                    rs.getString("firstName"),
+                    rs.getString("status")
+                });
+            }
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error loading availability: " + ex.getMessage());
+        }
+    }
+    
+    
+
+    private void loadNewAccounts() {
+        DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
+        model.setRowCount(0);  // Clear existing rows
+
+        String sql = "SELECT patientId, firstName, lastName, email FROM patients WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/redstone", "root", "");
+             PreparedStatement pst = conn.prepareStatement(sql);
+             ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                model.addRow(new Object[]{
+                    rs.getInt("patientId"),
+                    rs.getString("firstName"),
+                    rs.getString("lastName"),
+                    rs.getString("email")
+                });
+            }
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error loading new accounts: " + ex.getMessage());
+        }
+    }
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -40,24 +203,24 @@ public class systemStats extends javax.swing.JFrame {
         jTable1 = new javax.swing.JTable();
         jPanel14 = new javax.swing.JPanel();
         jLabel19 = new javax.swing.JLabel();
-        jLabel23 = new javax.swing.JLabel();
+        lblRevenue = new javax.swing.JLabel();
         jLabel13 = new javax.swing.JLabel();
         jPanel15 = new javax.swing.JPanel();
         jLabel20 = new javax.swing.JLabel();
-        jLabel24 = new javax.swing.JLabel();
+        lblTotalDoctors = new javax.swing.JLabel();
         jPanel16 = new javax.swing.JPanel();
         jLabel22 = new javax.swing.JLabel();
-        jLabel25 = new javax.swing.JLabel();
+        lblTotalPatients = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
+        lblMostActiveDoctor = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
-        jLabel11 = new javax.swing.JLabel();
+        lblCancellations = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
-        jLabel10 = new javax.swing.JLabel();
+        lblCommonDiagnosis = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTable2 = new javax.swing.JTable();
@@ -202,7 +365,7 @@ public class systemStats extends javax.swing.JFrame {
         jLabel19.setForeground(new java.awt.Color(102, 102, 102));
         jLabel19.setText("Revenue:");
 
-        jLabel23.setText("jLabel23");
+        lblRevenue.setText("jLabel23");
 
         jLabel13.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLabel13.setText("$");
@@ -217,7 +380,7 @@ public class systemStats extends javax.swing.JFrame {
                         .addGap(18, 18, 18)
                         .addComponent(jLabel13)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jLabel23))
+                        .addComponent(lblRevenue))
                     .addGroup(jPanel14Layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jLabel19)))
@@ -230,7 +393,7 @@ public class systemStats extends javax.swing.JFrame {
                 .addComponent(jLabel19)
                 .addGap(21, 21, 21)
                 .addGroup(jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel23)
+                    .addComponent(lblRevenue)
                     .addComponent(jLabel13))
                 .addContainerGap(13, Short.MAX_VALUE))
         );
@@ -241,7 +404,7 @@ public class systemStats extends javax.swing.JFrame {
         jLabel20.setForeground(new java.awt.Color(102, 102, 102));
         jLabel20.setText("Total Doctors:");
 
-        jLabel24.setText("jLabel24");
+        lblTotalDoctors.setText("jLabel24");
 
         javax.swing.GroupLayout jPanel15Layout = new javax.swing.GroupLayout(jPanel15);
         jPanel15.setLayout(jPanel15Layout);
@@ -254,7 +417,7 @@ public class systemStats extends javax.swing.JFrame {
                         .addComponent(jLabel20))
                     .addGroup(jPanel15Layout.createSequentialGroup()
                         .addGap(56, 56, 56)
-                        .addComponent(jLabel24)))
+                        .addComponent(lblTotalDoctors)))
                 .addContainerGap(84, Short.MAX_VALUE))
         );
         jPanel15Layout.setVerticalGroup(
@@ -263,7 +426,7 @@ public class systemStats extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel20)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 29, Short.MAX_VALUE)
-                .addComponent(jLabel24)
+                .addComponent(lblTotalDoctors)
                 .addGap(18, 18, 18))
         );
 
@@ -273,7 +436,7 @@ public class systemStats extends javax.swing.JFrame {
         jLabel22.setForeground(new java.awt.Color(102, 102, 102));
         jLabel22.setText("Total Patients:");
 
-        jLabel25.setText("jLabel25");
+        lblTotalPatients.setText("jLabel25");
 
         javax.swing.GroupLayout jPanel16Layout = new javax.swing.GroupLayout(jPanel16);
         jPanel16.setLayout(jPanel16Layout);
@@ -282,7 +445,7 @@ public class systemStats extends javax.swing.JFrame {
             .addGroup(jPanel16Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel25)
+                    .addComponent(lblTotalPatients)
                     .addComponent(jLabel22))
                 .addContainerGap(95, Short.MAX_VALUE))
         );
@@ -292,7 +455,7 @@ public class systemStats extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel22)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 28, Short.MAX_VALUE)
-                .addComponent(jLabel25)
+                .addComponent(lblTotalPatients)
                 .addGap(19, 19, 19))
         );
 
@@ -304,7 +467,7 @@ public class systemStats extends javax.swing.JFrame {
 
         jLabel3.setText("Dr.");
 
-        jLabel4.setText("jLabel4");
+        lblMostActiveDoctor.setText("jLabel4");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -319,7 +482,7 @@ public class systemStats extends javax.swing.JFrame {
                         .addGap(25, 25, 25)
                         .addComponent(jLabel3)
                         .addGap(18, 18, 18)
-                        .addComponent(jLabel4)))
+                        .addComponent(lblMostActiveDoctor)))
                 .addContainerGap(77, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -330,7 +493,7 @@ public class systemStats extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
-                    .addComponent(jLabel4))
+                    .addComponent(lblMostActiveDoctor))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -340,7 +503,7 @@ public class systemStats extends javax.swing.JFrame {
         jLabel7.setForeground(new java.awt.Color(102, 102, 102));
         jLabel7.setText("Cancellations:");
 
-        jLabel11.setText("jLabel11");
+        lblCancellations.setText("jLabel11");
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -353,7 +516,7 @@ public class systemStats extends javax.swing.JFrame {
                         .addComponent(jLabel7))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGap(27, 27, 27)
-                        .addComponent(jLabel11)))
+                        .addComponent(lblCancellations)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
@@ -362,7 +525,7 @@ public class systemStats extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel7)
                 .addGap(18, 18, 18)
-                .addComponent(jLabel11)
+                .addComponent(lblCancellations)
                 .addContainerGap(25, Short.MAX_VALUE))
         );
 
@@ -372,7 +535,7 @@ public class systemStats extends javax.swing.JFrame {
         jLabel6.setForeground(new java.awt.Color(102, 102, 102));
         jLabel6.setText("Common Diagnosis:");
 
-        jLabel10.setText("jLabel10");
+        lblCommonDiagnosis.setText("jLabel10");
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -385,7 +548,7 @@ public class systemStats extends javax.swing.JFrame {
                         .addComponent(jLabel6))
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGap(53, 53, 53)
-                        .addComponent(jLabel10)))
+                        .addComponent(lblCommonDiagnosis)))
                 .addContainerGap(69, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
@@ -394,7 +557,7 @@ public class systemStats extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel6)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel10)
+                .addComponent(lblCommonDiagnosis)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -565,18 +728,12 @@ public class systemStats extends javax.swing.JFrame {
     private javax.swing.JButton jButton7;
     private javax.swing.JButton jButton8;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel10;
-    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel22;
-    private javax.swing.JLabel jLabel23;
-    private javax.swing.JLabel jLabel24;
-    private javax.swing.JLabel jLabel25;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
@@ -594,5 +751,11 @@ public class systemStats extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable jTable1;
     private javax.swing.JTable jTable2;
+    private javax.swing.JLabel lblCancellations;
+    private javax.swing.JLabel lblCommonDiagnosis;
+    private javax.swing.JLabel lblMostActiveDoctor;
+    private javax.swing.JLabel lblRevenue;
+    private javax.swing.JLabel lblTotalDoctors;
+    private javax.swing.JLabel lblTotalPatients;
     // End of variables declaration//GEN-END:variables
 }

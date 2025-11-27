@@ -4,17 +4,26 @@
  */
 package patientdashboard;
 
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.event.*;
+import java.sql.*;
+
 /**
  *
  * @author bompe
  */
 public class myPatients extends javax.swing.JFrame {
 
+    private int doctorId;
+    
     /**
      * Creates new form myPatients
      */
-    public myPatients() {
+    public myPatients(int doctorId) {
+        this.doctorId = doctorId;
         initComponents();
+        
     }
 
     /**

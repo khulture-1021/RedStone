@@ -4,27 +4,183 @@
  */
 package patientdashboard;
 
-import java.sql.*;
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-
+import java.awt.*;
+import java.awt.event.*;
+import java.sql.*;
+import java.util.prefs.Preferences;
+import util.DatabaseConnection;
 /**
  *
  * @author tshiy
  */
 public class logIN extends javax.swing.JFrame {
 
+    private JCheckBox chkRememberMe;
+    private JDialog loadingDialog;
+    
     /**
      * Creates new form logIN
      */
     public logIN() {
         initComponents();
+        styleComponents();
+        lblStatus.setText("");
+        lblUserError.setText("");
+        lblPassError.setText("");
+        lblRoleError.setText("");
+        setupRememberMe();
+        setupLoadingSpinner();
+        applyFadeInEffect();
         addRealtimeValidation();
+        addPasswordToggle();
+    }
+    
+    private boolean sendOtpByEmail(String toEmail, String otp) {
+
+        final String fromEmail = "tshiyeya@gmail.com";      // your email
+        final String password = "abcd efgh ijkl mnop";      // your Gmail app password
+
+        Properties props = new Properties();
+        props.put("mail.smtp.host", "smtp.gmail.com");
+        props.put("mail.smtp.port", "587");
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.ssl.protocols", "TLSv1.2");
+
+        Session session = Session.getInstance(props, new javax.mail.Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(fromEmail, password);
+            }
+        });
+
+        try {
+
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(fromEmail));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+            message.setSubject("Your Redstone Clinic OTP Code");
+            message.setText(
+                    "Hello,\n\n" +
+                    "Your One-Time Password (OTP) is: " + otp + "\n\n" +
+                    "This code expires in 5 minutes.\n\n" +
+                    "Redstone Health Center\n" +
+                    "Community Care System"
+            );
+
+            Transport.send(message);
+            return true;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    
+    private void setupRememberMe() {
+        chkRememberMe = new JCheckBox("Remember Me");
+        chkRememberMe.setOpaque(false);
+        chkRememberMe.setForeground(Color.DARK_GRAY);
+
+        // Add checkbox under password field
+        jPanel1.add(chkRememberMe, 
+            new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 330, -1, -1));
+
+        // Load saved details
+        Preferences pref = Preferences.userRoot().node("clinic-login");
+        String savedUser = pref.get("username", "");
+        String savedRole = pref.get("role", "");
+
+        if (!savedUser.isEmpty()) {
+            txtUsername.setText(savedUser);
+            cmbRole.setSelectedItem(savedRole);
+            chkRememberMe.setSelected(true);
+        }
+    }
+
+    // Call this after successful login
+    private void saveRememberMe() {
+        Preferences pref = Preferences.userRoot().node("clinic-login");
+
+        if (chkRememberMe.isSelected()) {
+            pref.put("username", txtUsername.getText());
+            pref.put("role", cmbRole.getSelectedItem().toString());
+        } else {
+            pref.remove("username");
+            pref.remove("role");
+        }
+    }
+
+    private void setupLoadingSpinner() {
+        loadingDialog = new JDialog(this, false);
+        loadingDialog.setSize(150, 100);
+        loadingDialog.setLayout(new BorderLayout());
+        loadingDialog.setUndecorated(true);
+        loadingDialog.setLocationRelativeTo(this);
+
+        JLabel lbl = new JLabel("Authenticating...", SwingConstants.CENTER);
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
+
+        JProgressBar spinner = new JProgressBar();
+        spinner.setIndeterminate(true);
+
+        loadingDialog.add(lbl, BorderLayout.NORTH);
+        loadingDialog.add(spinner, BorderLayout.CENTER);
+    }
+
+    
+    // ------------------------------------------------------------
+    // UI UPGRADE (Top-notch appearance WITHOUT changing NetBeans layout)
+    // ------------------------------------------------------------
+    private void styleComponents() {
+        setTitle("Clinic Appointment System - Login");
+        setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/images/icon.png")));
+
+        txtUsername.setBorder(new LineBorder(new Color(0, 121, 151), 2, true));
+        txtPassword.setBorder(new LineBorder(new Color(0, 121, 151), 2, true));
+        cmbRole.setBorder(new LineBorder(new Color(0, 121, 151), 2, true));
+
+        btnLogin.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        BtnCreateAccount.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        // Modern button look
+        btnLogin.setBackground(new Color(0, 121, 151));
+        btnLogin.setForeground(Color.WHITE);
+        btnLogin.setFocusPainted(false);
+    }
+
+    // ------------------------------------------------------------
+    // PASSWORD SHOW/HIDE FEATURE
+    // ------------------------------------------------------------
+    private void addPasswordToggle() {
+        JButton toggle = new JButton("Show");
+        toggle.setBounds(txtPassword.getX() + txtPassword.getWidth() - 60, txtPassword.getY() + 5, 55, 30);
+        toggle.setFocusable(false);
+        toggle.setContentAreaFilled(false);
+        toggle.setBorder(null);
+        toggle.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        toggle.addActionListener(e -> {
+            if (txtPassword.getEchoChar() == '*') {
+                txtPassword.setEchoChar((char) 0);
+                toggle.setText("Hide");
+            } else {
+                txtPassword.setEchoChar('*');
+                toggle.setText("Show");
+            }
+        });
+
+        jPanel1.add(toggle);
+        jPanel1.repaint();
     }
     
     // ------------------------------------------------------------
-    // REALTIME VALIDATION LISTENERS
+    // REALTIME VALIDATION
     // ------------------------------------------------------------
     private void addRealtimeValidation() {
         txtUsername.getDocument().addDocumentListener(new SimpleDocumentListener() {
@@ -36,45 +192,40 @@ public class logIN extends javax.swing.JFrame {
         });
     }
 
-    // ------------------------------------------------------------
-    // VALIDATION METHODS
-    // ------------------------------------------------------------
     private boolean validateUsername() {
         String user = txtUsername.getText().trim();
-
         if (user.isEmpty()) {
+            lblUserError.setForeground(Color.RED);
             lblUserError.setText("Username required");
             return false;
         }
-
         lblUserError.setText("");
         return true;
     }
 
     private boolean validatePassword() {
         String pass = String.valueOf(txtPassword.getPassword()).trim();
-
         if (pass.isEmpty()) {
+            lblPassError.setForeground(Color.RED);
             lblPassError.setText("Password required");
             return false;
         }
-
         lblPassError.setText("");
         return true;
     }
 
     private boolean validateRole() {
         if (cmbRole.getSelectedIndex() == 0) {
+            lblRoleError.setForeground(Color.RED);
             lblRoleError.setText("Select a role");
             return false;
         }
-
         lblRoleError.setText("");
         return true;
-    }                                 
+    }
 
     // ------------------------------------------------------------
-    // REUSABLE DOCUMENT LISTENER
+    // Document Listener Template
     // ------------------------------------------------------------
     private interface SimpleDocumentListener extends DocumentListener {
         void update();
@@ -82,7 +233,25 @@ public class logIN extends javax.swing.JFrame {
         @Override default void removeUpdate(DocumentEvent e) { update(); }
         @Override default void changedUpdate(DocumentEvent e) { update(); }
     }
+    
+    private void applyFadeInEffect() {
+        Timer timer = new Timer(20, null);
+        final float[] opacity = {0f};
+        this.setOpacity(0f);
 
+        timer.addActionListener(e -> {
+            opacity[0] += 0.05f;
+            if (opacity[0] >= 1f) {
+                opacity[0] = 1f;
+                timer.stop();
+            }
+            setOpacity(opacity[0]);
+        });
+
+        timer.start();
+    }
+
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -307,61 +476,109 @@ public class logIN extends javax.swing.JFrame {
 
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
         // TODO add your handling code here:
+        lblStatus.setForeground(Color.RED);
         lblStatus.setText("");
 
         boolean valid =
-        validateUsername() &
-        validatePassword() &
-        validateRole();
+            validateUsername() &
+            validatePassword() &
+            validateRole();
 
         if (!valid) {
             lblStatus.setText("Fix the errors above.");
             return;
         }
 
-        String username = txtUsername.getText().trim();
-        String password = String.valueOf(txtPassword.getPassword()).trim();
-        String role = cmbRole.getSelectedItem().toString();
+        final String username = txtUsername.getText().trim();
+        final String password = String.valueOf(txtPassword.getPassword()).trim();
+        final String role = cmbRole.getSelectedItem().toString();
 
-        String sql = "";
+        btnLogin.setEnabled(false);
+        loadingDialog.setVisible(true);
 
-        // DECIDE WHICH TABLE TO CHECK
-        if (role.equals("Patient")) {
-            sql = "SELECT patientId, username FROM patients WHERE username=? AND password=?";
-        } else if (role.equals("Doctor")) {
-            sql = "SELECT doctorId, username FROM doctors WHERE username=? AND password=?";
-        } else if (role.equals("Admin")) {
-            sql = "SELECT adminId, username FROM admin WHERE username=? AND password=?";
-        }
 
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/redstone", "root", "")) {
+        SwingWorker<LoginResult, Void> worker = new SwingWorker<>() {
 
-            PreparedStatement pst = conn.prepareStatement(sql);
-            pst.setString(1, username);
-            pst.setString(2, password);
-            ResultSet rs = pst.executeQuery();
-
-            if (rs.next()) {
-                JOptionPane.showMessageDialog(this, "Login Successful!");
-
-                if (role.equals("Patient")) {
-                    int patientId = rs.getInt(1);
-                    String user = rs.getString("username");
-
-                    patientsDash dash = new patientsDash(patientId, user);
-                    dash.setVisible(true);
-                    this.dispose();
-                }
-
-                // TODO: doctor + admin dashboards here
-
-            } else {
-                lblStatus.setText("Invalid username or password.");
+            class LoginResult {
+                boolean success;
+                int id;
+                String user;
+                String error;
             }
 
-        } catch (Exception e) {
-            lblStatus.setText("Database Error: " + e.getMessage());
-        }
+            @Override
+            protected LoginResult doInBackground() {
+                LoginResult result = new LoginResult();
+                String sql;
+
+                switch (role) {
+                    case "Patient" -> sql = "SELECT patientId, username FROM patients WHERE username=? AND password=?";
+                    case "Doctor"  -> sql = "SELECT doctorId, username FROM doctors WHERE username=? AND password=?";
+                    case "Admin"   -> sql = "SELECT adminId, username FROM admin WHERE username=? AND password=?";
+                    default -> {
+                        result.error = "Unknown role selected.";
+                        return result;
+                    }
+                }
+
+                try (Connection conn = DatabaseConnection.getConnection();
+                     PreparedStatement pst = conn.prepareStatement(sql)) {
+
+                    pst.setString(1, username);
+                    pst.setString(2, password);
+
+                    try (ResultSet rs = pst.executeQuery()) {
+                        if (rs.next()) {
+                            result.success = true;
+                            result.id = rs.getInt(1);
+                            result.user = rs.getString("username");
+                        } else {
+                            result.error = "Invalid username or password.";
+                        }
+                    }
+
+                } catch (Exception e) {
+                    result.error = "Database Error: " + e.getMessage();
+                }
+
+                return result;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    loadingDialog.setVisible(false);
+                    saveRememberMe();
+
+                    LoginResult res = get();
+
+                    if (res.success) {
+                        lblStatus.setForeground(new Color(0, 153, 51));
+                        lblStatus.setText("Login successful!");
+                        JOptionPane.showMessageDialog(logIN.this, "Welcome " + res.user + "!");
+
+                        EventQueue.invokeLater(() -> {
+                            switch (role) {
+                                case "Patient" -> new patientsDash(res.id, res.user).setVisible(true);
+                                case "Doctor"  -> new DoctorDash(res.id, res.user).setVisible(true);
+                                case "Admin"   -> new AdminDash(res.id, res.user).setVisible(true);
+                            }
+                            dispose();
+                        });
+
+                    } else {
+                        lblStatus.setText(res.error);
+                    }
+
+                } catch (Exception e) {
+                    lblStatus.setText("Unexpected error: " + e.getMessage());
+                } finally {
+                    btnLogin.setEnabled(true);
+                }
+            }
+        };
+
+        worker.execute();
     }//GEN-LAST:event_btnLoginActionPerformed
 
     private void BtnCreateAccountActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnCreateAccountActionPerformed
@@ -406,11 +623,7 @@ public class logIN extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new logIN().setVisible(true);
-            }
-        });
+        EventQueue.invokeLater(() -> new logIN().setVisible(true));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

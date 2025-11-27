@@ -8,24 +8,23 @@ import com.toedter.calendar.JDateChooser;
 import util.DatabaseConnection;
 
 import javax.swing.*;
+import java.awt.EventQueue;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.sql.*;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.List;
 /**
  *
  * @author bompe
  */
 public class BookAppointment extends javax.swing.JFrame {
 
-    private int patientId;
+   private int patientId;
     private String username;
-    
+
     // Static map of doctors by department (easy to extend)
     private static final Map<String, List<String>> DOCTORS_BY_DEPT = new LinkedHashMap<>();
     static {
@@ -58,13 +57,14 @@ public class BookAppointment extends javax.swing.JFrame {
     private void postInit() {
         populateDepartments();
         setupListeners();
-        // Close behavior: go back to dashboard if window closed (optional)
+        // Close behavior: don't exit JVM when this window closes
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+
+        // Close behavior: optional actions when window closes (e.g., return to dashboard)
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 // optional: return to patient dashboard
-                // patientsDash dash = new patientsDash(patientId, username);
-                // dash.setVisible(true);
             }
         });
     }
@@ -92,14 +92,19 @@ public class BookAppointment extends javax.swing.JFrame {
 
         // When doctor or date changes -> refresh times
         cmbDoctor.addActionListener(e -> refreshAvailableTimes());
-        jDateChooser1.addPropertyChangeListener("date", evt -> refreshAvailableTimes());
+        // Use the date chooser used in UI (jDateChooser2)
+        jDateChooser2.addPropertyChangeListener("date", evt -> refreshAvailableTimes());
 
-        btnBook.addActionListener(e -> handleBookAction());
+        btnBook.addActionListener(e -> btnBookActionPerformedBackground());
         btnBack.addActionListener(e -> {
-            // Return to patientsDash
-            patientsDash dash = new patientsDash(patientId, username);
-            dash.setVisible(true);
-            this.dispose();
+            // Return to patientsDash on EDT
+            EventQueue.invokeLater(() -> {
+                patientsDash dash = new patientsDash(patientId, username);
+                dash.pack();
+                dash.setLocationRelativeTo(this);
+                dash.setVisible(true);
+                this.dispose();
+            });
         });
     }
 
@@ -117,7 +122,7 @@ public class BookAppointment extends javax.swing.JFrame {
         cmbTime.addItem("Select Time");
 
         String doctor = (String) cmbDoctor.getSelectedItem();
-        java.util.Date selectedDate = jDateChooser1.getDate();
+        java.util.Date selectedDate = jDateChooser2.getDate();
 
         if (doctor == null || doctor.equals("Select Doctor") || selectedDate == null) {
             return;
@@ -125,7 +130,6 @@ public class BookAppointment extends javax.swing.JFrame {
 
         // Format date for SQL
         java.sql.Date sqlDate = new java.sql.Date(selectedDate.getTime());
-
 
         // Get booked times from DB
         Set<String> booked = new HashSet<>();
@@ -142,6 +146,7 @@ public class BookAppointment extends javax.swing.JFrame {
             }
         } catch (Exception ex) {
             lblStatus.setText("Error loading booked times: " + ex.getMessage());
+            ex.printStackTrace();
             return;
         }
 
@@ -159,7 +164,6 @@ public class BookAppointment extends javax.swing.JFrame {
         lblDeptError.setText("");
         lblDoctorError.setText("");
         lblTimeError.setText("");
-        lblTimeError.setText("");
         lblReasonError.setText("");
         lblStatus.setText("");
 
@@ -171,12 +175,12 @@ public class BookAppointment extends javax.swing.JFrame {
             lblDoctorError.setText("Choose doctor");
             ok = false;
         }
-        if (jDateChooser1.getDate() == null) {
+        if (jDateChooser2.getDate() == null) {
             lblTimeError.setText("Select date");
             ok = false;
         } else {
             // no past dates
-            LocalDate chosen = jDateChooser1.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            LocalDate chosen = jDateChooser2.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             if (chosen.isBefore(LocalDate.now())) {
                 lblTimeError.setText("Cannot choose past date");
                 ok = false;
@@ -193,16 +197,8 @@ public class BookAppointment extends javax.swing.JFrame {
         return ok;
     }
 
-    // Booking action: insert appointment and show success
-    private void handleBookAction() {
-        if (!validateAppointmentForm()) return;
-
-        String department = (String) cmbDepartment.getSelectedItem();
-        String doctor = (String) cmbDoctor.getSelectedItem();
-        String time = (String) cmbTime.getSelectedItem();
-        java.util.Date date = jDateChooser1.getDate();
-        String reason = txtReason.getText().trim();
-
+    // This method performs the DB insertion; runs on background thread
+    private boolean performBooking(String department, String doctor, java.util.Date date, String time, String reason) throws Exception {
         String sql = "INSERT INTO appointments (patientId, department, doctor, appointmentDate, appointmentTime, reason) "
                 + "VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -222,22 +218,76 @@ public class BookAppointment extends javax.swing.JFrame {
             try (ResultSet gen = pst.getGeneratedKeys()) {
                 if (gen.next()) {
                     int appointmentId = gen.getInt(1);
-                    // student-style: we can print or use this id
                     System.out.println("New appointmentId = " + appointmentId);
                 }
             }
-
-            JOptionPane.showMessageDialog(this, "Appointment booked successfully!");
-            // go back to dashboard or clear form
-            patientsDash dash = new patientsDash(patientId, username);
-            dash.setVisible(true);
-            this.dispose();
-
-        } catch (SQLIntegrityConstraintViolationException dup) {
-            lblStatus.setText("Duplicate appointment or constraint error.");
-        } catch (Exception ex) {
-            lblStatus.setText("Booking error: " + ex.getMessage());
         }
+
+        return true;
+    }
+
+    // Booking action executed on a background thread via SwingWorker
+    private void btnBookActionPerformedBackground() {
+        if (!validateAppointmentForm()) return;
+
+        final String department = (String) cmbDepartment.getSelectedItem();
+        final String doctor = (String) cmbDoctor.getSelectedItem();
+        final String time = (String) cmbTime.getSelectedItem();
+        final java.util.Date date = jDateChooser2.getDate();
+        final String reason = txtReason.getText().trim();
+
+        btnBook.setEnabled(false);
+        lblStatus.setText("Booking...");
+
+        SwingWorker<Boolean, Void> worker = new SwingWorker<>() {
+            private String errorMessage = null;
+
+            @Override
+            protected Boolean doInBackground() {
+                try {
+                    return performBooking(department, doctor, date, time, reason);
+                } catch (SQLIntegrityConstraintViolationException dup) {
+                    errorMessage = "Duplicate appointment or constraint error.";
+                    return false;
+                } catch (Exception ex) {
+                    errorMessage = ex.getMessage();
+                    ex.printStackTrace();
+                    return false;
+                }
+            }
+
+            @Override
+            protected void done() {
+                btnBook.setEnabled(true);
+                try {
+                    boolean ok = get();
+                    if (ok) {
+                        // Notify listeners that appointments changed for this patient
+                        try {
+                            AppointmentNotifier.getInstance().notifyChange(patientId);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+
+                        JOptionPane.showMessageDialog(BookAppointment.this, "Appointment booked successfully!");
+                        // go back to dashboard on EDT
+                        EventQueue.invokeLater(() -> {
+                            patientsDash dash = new patientsDash(patientId, username);
+                            dash.pack();
+                            dash.setLocationRelativeTo(null);
+                            dash.setVisible(true);
+                            BookAppointment.this.dispose();
+                        });
+                    } else {
+                        lblStatus.setText("Booking error: " + (errorMessage != null ? errorMessage : "Unknown error"));
+                    }
+                } catch (Exception e) {
+                    lblStatus.setText("Unexpected error: " + e.getMessage());
+                }
+            }
+        };
+
+        worker.execute();
     }
 
     /**
@@ -341,6 +391,11 @@ public class BookAppointment extends javax.swing.JFrame {
         jButton7.setBorder(null);
         jButton7.setBorderPainted(false);
         jButton7.setContentAreaFilled(false);
+        jButton7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -564,23 +619,45 @@ public class BookAppointment extends javax.swing.JFrame {
 
     private void btnBackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBackActionPerformed
         // TODO add your handling code here:
-        
+        patientsDash pd = new patientsDash(patientId, username);
+            pd.pack();
+            pd.setLocationRelativeTo(this);
+            pd.setVisible(true);
     }//GEN-LAST:event_btnBackActionPerformed
 
     private void NavBtnCancelAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnCancelAppointmentActionPerformed
         // TODO add your handling code here:
+         Cancel c = new Cancel(patientId, username);
+            c.pack();
+            c.setLocationRelativeTo(this);
+            c.setVisible(true);
 
     }//GEN-LAST:event_NavBtnCancelAppointmentActionPerformed
 
     private void NavBtnEditProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnEditProfileActionPerformed
         // TODO add your handling code here:
+        Edit edit = new Edit(patientId, username);
+            edit.pack();
+            edit.setLocationRelativeTo(this);
+            edit.setVisible(true);
 
     }//GEN-LAST:event_NavBtnEditProfileActionPerformed
 
     private void NavBtnMedicalHistoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnMedicalHistoryActionPerformed
         // TODO add your handling code here:
-
+        History h = new History(patientId, username);
+            h.pack();
+            h.setLocationRelativeTo(this);
+            h.setVisible(true);
     }//GEN-LAST:event_NavBtnMedicalHistoryActionPerformed
+
+    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+        // TODO add your handling code here:
+        Helpframe help = new HelpFrame(patientId, username);
+            help.pack();
+            help.setLocationRelativeTo(this);
+            help.setVisible(true);
+    }//GEN-LAST:event_jButton7ActionPerformed
 
     /**
      * @param args the command line arguments

@@ -4,236 +4,62 @@
  */
 package patientdashboard;
 
-import util.DatabaseConnection;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableRowSorter;
-import javax.swing.RowFilter;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.*;
-import java.awt.EventQueue;
-import java.awt.GridLayout;
-import java.io.FileOutputStream;
+// Standard Java imports
+import javax.swing.*;  // For GUI components like JFrame, JTable, JTextArea, etc.
+import javax.swing.table.DefaultTableModel;  // For handling the JTable model
+import java.awt.event.*;  // For handling button actions, etc.
+
+// For Database Connectivity (JDBC)
+import java.sql.*;  // For JDBC to interact with the MySQL database (or another RDBMS)
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Vector;
-import java.util.regex.Pattern;
-
-import com.itextpdf.text.Document;           // requires iText on classpath
-import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.pdf.PdfWriter;
-
 
 /**
  *
- * @author bompe
+ * @author tshiy
  */
-public class History extends javax.swing.JFrame {
+public class DoctorMedicalPatientHistory extends javax.swing.JFrame {
 
     private int patientId;
-    private String username;
-    
-    private TableRowSorter<DefaultTableModel> rowSorter;
-
-    // Listener instance so we can unregister on dispose
-    private final AppointmentNotifier.Listener appointmentListener = changedPatientId -> {
-        if (changedPatientId == this.patientId) {
-            EventQueue.invokeLater(this::loadPatientMedicalHistory);
-        }
-    };
-
     /**
-     * Creates new form History
+     * Creates new form DoctorMedicalPatientHistory
      */
-    public History(int patientId, String username) {
+    public DoctorMedicalPatientHistory(int patientId) {
         initComponents();
         this.patientId = patientId;
-        this.username = username;
-        
-        // Don't exit JVM when closing this window
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-
-        // Register to receive notifications when appointments/history change
-        AppointmentNotifier.getInstance().addListener(appointmentListener);
-
-        // Initialize and load data
-        loadPatientMedicalHistory();
-        setupSearch();
-        setupTableDoubleClick();
+        loadDoctorMedicalHistory();
     }
     
-    // ================= LOAD HISTORY TABLE ======================
-    private void loadPatientMedicalHistory() {
-        DefaultTableModel model = (DefaultTableModel) tblHistory.getModel();
+    private void loadDoctorMedicalHistory() {
+        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
         model.setRowCount(0);  // Clear previous data
 
-        // SQL returns columns: appointmentDate, appointmentTime, doctor, diagnosis, notes, prescription, serviceFee
-        String sql = "SELECT appointmentDate, appointmentTime, doctor, diagnosis, notes, prescription, serviceFee "
-                   + "FROM medical_history WHERE patientId = ? "
-                   + "ORDER BY appointmentDate DESC, appointmentTime DESC";
-        try (Connection conn = DatabaseConnection.getConnection();
+        String sql = "SELECT mh.recordId, mh.diagnosis, mh.treatment, mh.prescriptions, mh.appointmentDate, d.firstName AS doctorFirstName, d.lastName AS doctorLastName "
+                   + "FROM medical_history mh "
+                   + "JOIN doctors d ON mh.doctorId = d.doctorId "
+                   + "WHERE mh.patientId = ?";
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/redstone", "root", "");
              PreparedStatement pst = conn.prepareStatement(sql)) {
 
             pst.setInt(1, patientId);
-            try (ResultSet rs = pst.executeQuery()) {
-                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-                while (rs.next()) {
-                    Object dateObj = rs.getDate("appointmentDate");
-                    String date = dateObj != null ? df.format((Date) dateObj) : "";
-                    String time = rs.getString("appointmentTime");
-                    String doctor = rs.getString("doctor");
-                    String diagnosis = rs.getString("diagnosis");
-                    String notes = rs.getString("notes");
-                    String prescription = rs.getString("prescription");
-                    Object fees = rs.getObject("serviceFee");
+            ResultSet rs = pst.executeQuery();
 
-                    model.addRow(new Object[]{date, time, doctor, diagnosis, notes, prescription, fees});
-                }
+            while (rs.next()) {
+                model.addRow(new Object[]{
+                    rs.getInt("recordId"),
+                    rs.getString("doctorFirstName") + " " + rs.getString("doctorLastName")
+                    rs.getString("diagnosis"),
+                    rs.getString("treatment"),
+                    rs.getString("prescriptions"),
+                    rs.getString("appointmentDate"),
+                });
             }
 
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Error loading medical history: " + ex.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
-            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading medical history: " + ex.getMessage());
         }
-    }
-
-    // ---------------- Search/filter ----------------
-    private void setupSearch() {
-        DefaultTableModel model = (DefaultTableModel) tblHistory.getModel();
-        rowSorter = new TableRowSorter<>(model);
-        tblHistory.setRowSorter(rowSorter);
-
-        txtSearch.getDocument().addDocumentListener(new DocumentListener() {
-            private void applyFilter() {
-                String text = txtSearch.getText().trim();
-                if (text.length() == 0) {
-                    rowSorter.setRowFilter(null);
-                } else {
-                    String regex = "(?i).*" + Pattern.quote(text) + ".*";
-                    RowFilter<DefaultTableModel, Object> rf = new RowFilter<DefaultTableModel, Object>() {
-                        public boolean include(Entry<? extends DefaultTableModel, ? extends Object> entry) {
-                            // Check date(0), time(1), doctor(2), diagnosis(3), notes(4), prescription(5)
-                            for (int i : new int[]{0, 1, 2, 3, 4, 5}) {
-                                Object val = entry.getValue(i);
-                                if (val != null && val.toString().matches(regex)) return true;
-                            }
-                            return false;
-                        }
-                    };
-                    rowSorter.setRowFilter(rf);
-                }
-            }
-
-            public void insertUpdate(DocumentEvent e) { applyFilter(); }
-            public void removeUpdate(DocumentEvent e) { applyFilter(); }
-            public void changedUpdate(DocumentEvent e) { applyFilter(); }
-        });
-    }
-
-    // ---------------- View details (double-click + button) ----------------
-    private void openViewDetails() {
-        int selectedRow = tblHistory.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Select a record to view details.", "No selection", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-        selectedRow = tblHistory.convertRowIndexToModel(selectedRow);
-        DefaultTableModel model = (DefaultTableModel) tblHistory.getModel();
-
-        String date = String.valueOf(model.getValueAt(selectedRow, 0));
-        String time = String.valueOf(model.getValueAt(selectedRow, 1));
-        String doctor = String.valueOf(model.getValueAt(selectedRow, 2));
-        String diagnosis = String.valueOf(model.getValueAt(selectedRow, 3));
-        String notes = String.valueOf(model.getValueAt(selectedRow, 4));
-        String prescription = String.valueOf(model.getValueAt(selectedRow, 5));
-        String fees = String.valueOf(model.getValueAt(selectedRow, 6));
-
-        JTextArea area = new JTextArea(12, 50);
-        area.setEditable(false);
-        StringBuilder sb = new StringBuilder();
-        sb.append("Date: ").append(date).append("\n");
-        sb.append("Time: ").append(time).append("\n");
-        sb.append("Doctor: ").append(doctor).append("\n\n");
-        sb.append("Diagnosis:\n").append(diagnosis).append("\n\n");
-        sb.append("Notes:\n").append(notes).append("\n\n");
-        sb.append("Prescription:\n").append(prescription).append("\n\n");
-        sb.append("Service Fees: ").append(fees).append("\n");
-        area.setText(sb.toString());
-        area.setCaretPosition(0);
-
-        JOptionPane.showMessageDialog(this, new JScrollPane(area), "Record Details", JOptionPane.INFORMATION_MESSAGE);
-    }
-
-    private void setupTableDoubleClick() {
-        tblHistory.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                if (evt.getClickCount() == 2) openViewDetails();
-            }
-        });
-    }
-
-    // ---------------- Export to PDF ----------------
-    private void exportToPdfFile(String outputPath) {
-        DefaultTableModel model = (DefaultTableModel) tblHistory.getModel();
-        Document document = new Document();
-        try {
-            PdfWriter.getInstance(document, new FileOutputStream(outputPath));
-            document.open();
-
-            document.add(new Paragraph("Patient History Report"));
-            document.add(new Paragraph("Patient ID: " + patientId));
-            document.add(new Paragraph("Generated: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())));
-            document.add(new Paragraph(" "));
-            for (int i = 0; i < model.getRowCount(); i++) {
-                String date = String.valueOf(model.getValueAt(i, 0));
-                String time = String.valueOf(model.getValueAt(i, 1));
-                String doctor = String.valueOf(model.getValueAt(i, 2));
-                String diagnosis = String.valueOf(model.getValueAt(i, 3));
-                String notes = String.valueOf(model.getValueAt(i, 4));
-                String prescription = String.valueOf(model.getValueAt(i, 5));
-                String fees = String.valueOf(model.getValueAt(i, 6));
-
-                document.add(new Paragraph("Date: " + date + "    Time: " + time));
-                document.add(new Paragraph("Doctor: " + doctor));
-                document.add(new Paragraph("Diagnosis: " + diagnosis));
-                document.add(new Paragraph("Notes: " + notes));
-                document.add(new Paragraph("Prescription: " + prescription));
-                document.add(new Paragraph("Service Fees: " + fees));
-                document.add(new Paragraph("------------------------------------------------------------"));
-            }
-            JOptionPane.showMessageDialog(this, "Exported PDF to: " + outputPath, "Export Success", JOptionPane.INFORMATION_MESSAGE);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Failed to export PDF:\n" + e.getMessage(), "Export Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        } finally {
-            if (document.isOpen()) document.close();
-        }
-    }
-
-    private void onExportPdfClick() {
-        String defaultPath = System.getProperty("user.home") + "/history_report_" + patientId + ".pdf";
-        String path = JOptionPane.showInputDialog(this, "Enter output path for PDF:", defaultPath);
-        if (path != null && !path.trim().isEmpty()) {
-            exportToPdfFile(path.trim());
-        }
-    }
-
-    /**
-     * Public refresh method (safe to call from any thread)
-     */
-    public void refreshHistory() {
-        EventQueue.invokeLater(this::loadPatientMedicalHistory);
-    }
-
-    @Override
-    public void dispose() {
-        // Unregister listener to avoid leaks
-        AppointmentNotifier.getInstance().removeListener(appointmentListener);
-        super.dispose();
     }
 
     /**
@@ -255,7 +81,7 @@ public class History extends javax.swing.JFrame {
         jButton7 = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        tblHistory = new javax.swing.JTable();
+        medicalHistory = new javax.swing.JTable();
         txtSearch = new javax.swing.JTextField();
         btnViewDetails = new javax.swing.JButton();
         btnAddRecord = new javax.swing.JButton();
@@ -366,21 +192,21 @@ public class History extends javax.swing.JFrame {
         jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLabel1.setText("Medical History");
 
-        tblHistory.setBackground(new java.awt.Color(0, 153, 153));
-        tblHistory.setForeground(new java.awt.Color(255, 255, 255));
-        tblHistory.setModel(new javax.swing.table.DefaultTableModel(
+        medicalHistory.setBackground(new java.awt.Color(0, 153, 153));
+        medicalHistory.setForeground(new java.awt.Color(255, 255, 255));
+        medicalHistory.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "Record ID", "Diagnosis", "Treatment", "Appointment Date", "Created At"
+                "Record ID", "Doctor First Name", "Doctor Last Name", "Diagnosis", "Treatment", "Prescriptions", "Appointment Date"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
+                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
             };
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false
+                false, true, false, true, true, true, true
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -391,7 +217,7 @@ public class History extends javax.swing.JFrame {
                 return canEdit [columnIndex];
             }
         });
-        jScrollPane1.setViewportView(tblHistory);
+        jScrollPane1.setViewportView(medicalHistory);
 
         txtSearch.setText("Search (date/doctor/prescription)");
 
@@ -434,7 +260,7 @@ public class History extends javax.swing.JFrame {
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 820, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(35, Short.MAX_VALUE))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -460,7 +286,7 @@ public class History extends javax.swing.JFrame {
                     .addComponent(btnViewDetails)
                     .addComponent(btnAddRecord)
                     .addComponent(btnExportPDF))
-                .addContainerGap(22, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -475,28 +301,22 @@ public class History extends javax.swing.JFrame {
         );
 
         pack();
-        setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
     private void NavBtnBack2DashActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnBack2DashActionPerformed
         // TODO add your handling code here:
-        new patientsDash(patientId,username).setVisible(true);
-        dispose();
     }//GEN-LAST:event_NavBtnBack2DashActionPerformed
 
     private void NavBtnBookAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnBookAppointmentActionPerformed
         // TODO add your handling code here:
-
     }//GEN-LAST:event_NavBtnBookAppointmentActionPerformed
 
     private void NavBtnCancelAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnCancelAppointmentActionPerformed
         // TODO add your handling code here:
-
     }//GEN-LAST:event_NavBtnCancelAppointmentActionPerformed
 
     private void NavBtnEditProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnEditProfileActionPerformed
         // TODO add your handling code here:
-
     }//GEN-LAST:event_NavBtnEditProfileActionPerformed
 
     private void btnViewDetailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnViewDetailsActionPerformed
@@ -517,7 +337,37 @@ public class History extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
-    
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(DoctorMedicalPatientHistory.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(DoctorMedicalPatientHistory.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(DoctorMedicalPatientHistory.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(DoctorMedicalPatientHistory.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+
+        /* Create and display the form */
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                new DoctorMedicalPatientHistory().setVisible(true);
+            }
+        });
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton NavBtnBack2Dash;
@@ -533,7 +383,7 @@ public class History extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable tblHistory;
+    private javax.swing.JTable medicalHistory;
     private javax.swing.JTextField txtSearch;
     // End of variables declaration//GEN-END:variables
 }
