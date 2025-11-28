@@ -4,6 +4,11 @@
  */
 package patientdashboard;
 
+import java.awt.Desktop;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -95,7 +100,7 @@ public class patientsDash extends javax.swing.JFrame {
         jButton7 = new javax.swing.JButton();
         jButton8 = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
+        btnConsulationNotes = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         lblWelcome = new javax.swing.JLabel();
         jLabel19 = new javax.swing.JLabel();
@@ -207,6 +212,11 @@ public class patientsDash extends javax.swing.JFrame {
         jButton7.setBorder(null);
         jButton7.setBorderPainted(false);
         jButton7.setContentAreaFilled(false);
+        jButton7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
 
         jButton8.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jButton8.setForeground(new java.awt.Color(255, 255, 255));
@@ -225,9 +235,17 @@ public class patientsDash extends javax.swing.JFrame {
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/2.png"))); // NOI18N
         jLabel1.setText("Redstone Health Center");
 
-        jLabel6.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        jLabel6.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel6.setText("Consultation Notes");
+        btnConsulationNotes.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        btnConsulationNotes.setForeground(new java.awt.Color(255, 255, 255));
+        btnConsulationNotes.setText("Consulation Notes");
+        btnConsulationNotes.setBorder(null);
+        btnConsulationNotes.setBorderPainted(false);
+        btnConsulationNotes.setContentAreaFilled(false);
+        btnConsulationNotes.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnConsulationNotesActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -247,7 +265,7 @@ public class patientsDash extends javax.swing.JFrame {
                             .addComponent(NavBtnMedicalHistory)
                             .addComponent(jButton7)
                             .addComponent(jButton8)
-                            .addComponent(jLabel6))
+                            .addComponent(btnConsulationNotes))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -265,10 +283,10 @@ public class patientsDash extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addComponent(NavBtnMedicalHistory)
                 .addGap(18, 18, 18)
-                .addComponent(jLabel6)
+                .addComponent(btnConsulationNotes)
                 .addGap(18, 18, 18)
                 .addComponent(jButton7)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 242, Short.MAX_VALUE)
                 .addComponent(jButton8)
                 .addGap(68, 68, 68))
         );
@@ -448,6 +466,11 @@ public class patientsDash extends javax.swing.JFrame {
         jButton1.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jButton1.setForeground(new java.awt.Color(255, 255, 255));
         jButton1.setText("Visit site");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
         jPanel8.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 90, -1, -1));
 
         jLabel27.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/pexels-towfiqu-barbhuiya-3440682-8395815.jpg"))); // NOI18N
@@ -774,7 +797,8 @@ public class patientsDash extends javax.swing.JFrame {
 
     private void NavBtnMedicalHistoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnMedicalHistoryActionPerformed
         // TODO add your handling code here:
-        
+        new History(patientId, username).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_NavBtnMedicalHistoryActionPerformed
 
     private void NavBtnBookAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnBookAppointmentActionPerformed
@@ -809,6 +833,27 @@ public class patientsDash extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jButton8ActionPerformed
 
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+        try{
+            Desktop.getDesktop().browse(new URL("https://fikile26.github.io/RedStone-Wesite/").toURI());
+        }catch(Exception e){
+            System.out.println("error");
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void btnConsulationNotesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConsulationNotesActionPerformed
+        // TODO add your handling code here:
+        new ConsultNotes(patientId, username).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnConsulationNotesActionPerformed
+
+    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+        // TODO add your handling code here:
+        new HelpFrame(patientId, username).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_jButton7ActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -820,6 +865,7 @@ public class patientsDash extends javax.swing.JFrame {
     private javax.swing.JButton NavBtnCancelAppointment;
     private javax.swing.JButton NavBtnEditProfile;
     private javax.swing.JButton NavBtnMedicalHistory;
+    private javax.swing.JButton btnConsulationNotes;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton7;
     private javax.swing.JButton jButton8;
@@ -849,7 +895,6 @@ public class patientsDash extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel31;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;

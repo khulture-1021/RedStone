@@ -4,9 +4,21 @@
  */
 package patientdashboard;
 
+import util.DatabaseConnection;
+
+import java.awt.event.ActionEvent;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+
 import javax.swing.Timer;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -14,23 +26,164 @@ import javax.swing.Timer;
  */
 public class AdminDash extends javax.swing.JFrame {
 
+    private int adminId;
+    private String adminUsername;
+    private String adminName;
+    private String adminEmail;
+
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
+    private static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    
     /**
      * Creates new form AdminDash
      */
-    public AdminDash() {
+    public AdminDash(int adminId) {
         initComponents();
+        this.adminId = adminId;
+
+        loadAdminProfile();
+        updateDashboardStats();
+        loadRecentAppointments();
         startClock();
     }
-     private void startClock() {
-    Timer timer = new Timer(1000, e -> {
-        LocalDate today = LocalDate.now();
-        LocalTime now = LocalTime.now().withNano(0);
+    
+    // -------------------------
+    // Load admin profile from DB
+    // -------------------------
+    private void loadAdminProfile() {
+        // Use admins table; adjust SQL if your admin table has different column names.
+        String sql = "SELECT name, username, email FROM admins WHERE admin_id = ?";
 
-        jLabelDate.setText("Date: " + today.toString());
-        jLabelTime.setText("Time: " + now.toString());
-    });
-    timer.start();
-}
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pst = conn.prepareStatement(sql)) {
+
+            pst.setInt(1, adminId);
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                    adminName = rs.getString("name");
+                    adminUsername = rs.getString("username");
+                    adminEmail = rs.getString("email");
+
+                    lblName.setText(adminName != null ? adminName : "Admin");
+                    lblEmail.setText(adminEmail != null ? adminEmail : "");
+                    lblUsername.setText(adminUsername != null ? adminUsername : "");
+                    lblSpecialty.setText("Admin");
+                    lblAdminId.setText("ID: " + adminId);
+                    lblWelcome.setText("Hello " + (adminName != null ? adminName : "Admin"));
+                } else {
+                    // No admin record found — set sensible defaults
+                    lblName.setText("Admin");
+                    lblEmail.setText("");
+                    lblUsername.setText("");
+                    lblSpecialty.setText("Admin");
+                    lblAdminId.setText("ID: " + adminId);
+                    lblWelcome.setText("Hello Admin");
+                }
+            }
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Database error loading profile: " + ex.getMessage(),
+                    "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // ---------------------------------
+    // Update top-level dashboard stats
+    // ---------------------------------
+    private void updateDashboardStats() {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+
+            // Total Doctors
+            try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) AS cnt FROM doctors");
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    lblTotalDoctors.setText(rs.getString("cnt"));
+                } else {
+                    lblTotalDoctors.setText("0");
+                }
+            }
+
+            // Total Patients
+            try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) AS cnt FROM patients");
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    lblTotalPatients.setText(rs.getString("cnt"));
+                } else {
+                    lblTotalPatients.setText("0");
+                }
+            }
+
+            // Revenue (sum of serviceFee for completed appointments)
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT IFNULL(SUM(serviceFee),0) AS total FROM appointments WHERE status = 'COMPLETED'");
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    double rev = rs.getDouble("total");
+                    lblRevenue.setText(String.format("%.2f", rev));
+                } else {
+                    lblRevenue.setText("0.00");
+                }
+            }
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Database error loading stats: " + ex.getMessage(),
+                    "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // ---------------------------------
+    // Load recent appointments into table
+    // ---------------------------------
+    private void loadRecentAppointments() {
+        DefaultTableModel model = (DefaultTableModel) tblAppointments.getModel();
+        model.setRowCount(0);
+
+        String sql = "SELECT a.appointmentDate, a.diagnosis, "
+                + "COALESCE(CONCAT(d.firstName,' ',d.lastName), 'Unknown') AS doctor_name, "
+                + "a.status "
+                + "FROM appointments a "
+                + "LEFT JOIN doctors d ON a.doctorId = d.doctorId "
+                + "ORDER BY a.appointmentDate DESC LIMIT 10";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pst = conn.prepareStatement(sql);
+             ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                java.sql.Timestamp ts = rs.getTimestamp("appointmentDate");
+                String dateStr = ts != null ? ts.toLocalDateTime().format(DATETIME_FMT) : "";
+                String diagnosis = rs.getString("diagnosis");
+                String doctor = rs.getString("doctor_name");
+                String status = rs.getString("status");
+
+                model.addRow(new Object[]{dateStr, diagnosis != null ? diagnosis : "", doctor, status != null ? status : ""});
+            }
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Database error loading appointments: " + ex.getMessage(),
+                    "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // -------------------
+    // Start live clock
+    // -------------------
+    private void startClock() {
+        Timer timer = new Timer(1000, (ActionEvent e) -> {
+            LocalDate date = LocalDate.now();
+            LocalTime time = LocalTime.now();
+
+            lblDate.setText(date.toString());
+            lblTime.setText(time.format(TIME_FORMATTER));
+        });
+        timer.start();
+    }
+
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -53,22 +206,22 @@ public class AdminDash extends javax.swing.JFrame {
         jButton10 = new javax.swing.JButton();
         jPanel9 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
+        lblWelcome = new javax.swing.JLabel();
         jLabel12 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        tblAppointments = new javax.swing.JTable();
         jPanel10 = new javax.swing.JPanel();
         jPanel11 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
+        lblName = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
-        jLabel10 = new javax.swing.JLabel();
+        lblAdminId = new javax.swing.JLabel();
         jLabel11 = new javax.swing.JLabel();
         jLabel16 = new javax.swing.JLabel();
-        jLabel17 = new javax.swing.JLabel();
-        jLabel18 = new javax.swing.JLabel();
-        jLabel21 = new javax.swing.JLabel();
+        lblUsername = new javax.swing.JLabel();
+        lblSpecialty = new javax.swing.JLabel();
+        lblEmail = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
         jPanel12 = new javax.swing.JPanel();
         jLabel29 = new javax.swing.JLabel();
@@ -76,18 +229,20 @@ public class AdminDash extends javax.swing.JFrame {
         jLabel31 = new javax.swing.JLabel();
         jPanel13 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
-        jLabelDate = new javax.swing.JLabel();
+        JLabelDate = new javax.swing.JLabel();
         jLabelTime = new javax.swing.JLabel();
+        lblDate = new javax.swing.JLabel();
+        lblTime = new javax.swing.JLabel();
         jPanel14 = new javax.swing.JPanel();
         jLabel19 = new javax.swing.JLabel();
-        jLabel23 = new javax.swing.JLabel();
+        lblRevenue = new javax.swing.JLabel();
         jLabel13 = new javax.swing.JLabel();
         jPanel15 = new javax.swing.JPanel();
         jLabel20 = new javax.swing.JLabel();
-        jLabel24 = new javax.swing.JLabel();
+        lblTotalDoctors = new javax.swing.JLabel();
         jPanel16 = new javax.swing.JPanel();
         jLabel22 = new javax.swing.JLabel();
-        jLabel25 = new javax.swing.JLabel();
+        lblTotalPatients = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
@@ -138,6 +293,11 @@ public class AdminDash extends javax.swing.JFrame {
         jButton8.setBorder(null);
         jButton8.setBorderPainted(false);
         jButton8.setContentAreaFilled(false);
+        jButton8.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton8ActionPerformed(evt);
+            }
+        });
 
         jButton9.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jButton9.setForeground(new java.awt.Color(255, 255, 255));
@@ -145,6 +305,11 @@ public class AdminDash extends javax.swing.JFrame {
         jButton9.setBorder(null);
         jButton9.setBorderPainted(false);
         jButton9.setContentAreaFilled(false);
+        jButton9.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton9ActionPerformed(evt);
+            }
+        });
 
         jLabel1.setFont(new java.awt.Font("Verdana", 1, 14)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
@@ -157,6 +322,11 @@ public class AdminDash extends javax.swing.JFrame {
         jButton1.setBorder(null);
         jButton1.setBorderPainted(false);
         jButton1.setContentAreaFilled(false);
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         jButton10.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jButton10.setForeground(new java.awt.Color(255, 255, 255));
@@ -164,6 +334,11 @@ public class AdminDash extends javax.swing.JFrame {
         jButton10.setBorder(null);
         jButton10.setBorderPainted(false);
         jButton10.setContentAreaFilled(false);
+        jButton10.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton10ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
         jPanel8.setLayout(jPanel8Layout);
@@ -214,9 +389,9 @@ public class AdminDash extends javax.swing.JFrame {
         jLabel2.setForeground(new java.awt.Color(255, 255, 255));
         jLabel2.setText("Hello Dr.");
 
-        jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        jLabel3.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel3.setText("Name");
+        lblWelcome.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        lblWelcome.setForeground(new java.awt.Color(255, 255, 255));
+        lblWelcome.setText("Name");
 
         jLabel12.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/ill3.png"))); // NOI18N
 
@@ -228,7 +403,7 @@ public class AdminDash extends javax.swing.JFrame {
                 .addGap(21, 21, 21)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel3)
+                .addComponent(lblWelcome)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel12)
                 .addGap(33, 33, 33))
@@ -239,7 +414,7 @@ public class AdminDash extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
-                    .addComponent(jLabel3))
+                    .addComponent(lblWelcome))
                 .addGap(50, 50, 50))
             .addGroup(jPanel9Layout.createSequentialGroup()
                 .addContainerGap()
@@ -250,8 +425,8 @@ public class AdminDash extends javax.swing.JFrame {
         jLabel5.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLabel5.setText("Admin DashBoard");
 
-        jTable1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        tblAppointments.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        tblAppointments.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -267,7 +442,7 @@ public class AdminDash extends javax.swing.JFrame {
                 return types [columnIndex];
             }
         });
-        jScrollPane1.setViewportView(jTable1);
+        jScrollPane1.setViewportView(tblAppointments);
 
         jPanel10.setBackground(new java.awt.Color(255, 255, 255));
         jPanel10.setForeground(new java.awt.Color(51, 51, 51));
@@ -296,26 +471,26 @@ public class AdminDash extends javax.swing.JFrame {
                 .addContainerGap(15, Short.MAX_VALUE))
         );
 
-        jLabel6.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel6.setText("Dr. Name Surname");
+        lblName.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        lblName.setText("Dr. Name Surname");
 
         jLabel9.setForeground(new java.awt.Color(102, 102, 102));
         jLabel9.setText("Specialty");
 
-        jLabel10.setForeground(new java.awt.Color(102, 102, 102));
-        jLabel10.setText("Admin ID");
+        lblAdminId.setForeground(new java.awt.Color(102, 102, 102));
+        lblAdminId.setText("Admin ID");
 
         jLabel11.setForeground(new java.awt.Color(102, 102, 102));
         jLabel11.setText("Email Address");
 
         jLabel16.setText("|");
 
-        jLabel17.setForeground(new java.awt.Color(102, 102, 102));
-        jLabel17.setText("Username");
+        lblUsername.setForeground(new java.awt.Color(102, 102, 102));
+        lblUsername.setText("Username");
 
-        jLabel18.setText("Admin");
+        lblSpecialty.setText("Admin");
 
-        jLabel21.setText("jLabel21");
+        lblEmail.setText("jLabel21");
 
         jLabel8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/7686cf27613adfc9c0b4385c9d80ac3a.png"))); // NOI18N
 
@@ -331,25 +506,25 @@ public class AdminDash extends javax.swing.JFrame {
                         .addComponent(jLabel8)
                         .addGap(34, 34, 34)
                         .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel6)
+                            .addComponent(lblName)
                             .addGroup(jPanel10Layout.createSequentialGroup()
                                 .addGap(6, 6, 6)
                                 .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel10)
-                                    .addComponent(jLabel17)))))
+                                    .addComponent(lblAdminId)
+                                    .addComponent(lblUsername)))))
                     .addGroup(jPanel10Layout.createSequentialGroup()
                         .addGap(31, 31, 31)
                         .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel11)
                             .addGroup(jPanel10Layout.createSequentialGroup()
                                 .addGap(6, 6, 6)
-                                .addComponent(jLabel21)))
+                                .addComponent(lblEmail)))
                         .addGap(51, 51, 51)
                         .addComponent(jLabel16)
                         .addGap(31, 31, 31)
                         .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jLabel9)
-                            .addComponent(jLabel18))))
+                            .addComponent(lblSpecialty))))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel10Layout.setVerticalGroup(
@@ -359,22 +534,22 @@ public class AdminDash extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel10Layout.createSequentialGroup()
-                        .addComponent(jLabel6)
+                        .addComponent(lblName)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel17)
+                        .addComponent(lblUsername)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel10))
+                        .addComponent(lblAdminId))
                     .addComponent(jLabel8))
                 .addGap(50, 50, 50)
                 .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(jPanel10Layout.createSequentialGroup()
                         .addComponent(jLabel11)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel21))
+                        .addComponent(lblEmail))
                     .addGroup(jPanel10Layout.createSequentialGroup()
                         .addComponent(jLabel9)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel18))
+                        .addComponent(lblSpecialty))
                     .addComponent(jLabel16, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(13, Short.MAX_VALUE))
         );
@@ -413,13 +588,21 @@ public class AdminDash extends javax.swing.JFrame {
                 .addContainerGap(19, Short.MAX_VALUE))
         );
 
-        jLabelDate.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        jLabelDate.setForeground(new java.awt.Color(255, 255, 255));
-        jLabelDate.setText("Date:   yyyy-mm-dd");
+        JLabelDate.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        JLabelDate.setForeground(new java.awt.Color(255, 255, 255));
+        JLabelDate.setText("Date:");
 
         jLabelTime.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabelTime.setForeground(new java.awt.Color(255, 255, 255));
-        jLabelTime.setText("Time:  hh:mm:ss");
+        jLabelTime.setText("Time:");
+
+        lblDate.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        lblDate.setForeground(new java.awt.Color(255, 255, 255));
+        lblDate.setText(" yyy-mm-dd");
+
+        lblTime.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        lblTime.setForeground(new java.awt.Color(255, 255, 255));
+        lblTime.setText("hh:mm:ss");
 
         javax.swing.GroupLayout jPanel12Layout = new javax.swing.GroupLayout(jPanel12);
         jPanel12.setLayout(jPanel12Layout);
@@ -436,19 +619,29 @@ public class AdminDash extends javax.swing.JFrame {
             .addComponent(jPanel13, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(jPanel12Layout.createSequentialGroup()
                 .addGap(28, 28, 28)
-                .addGroup(jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabelTime)
-                    .addComponent(jLabelDate))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(jPanel12Layout.createSequentialGroup()
+                        .addComponent(jLabelTime)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(lblTime, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(jPanel12Layout.createSequentialGroup()
+                        .addComponent(JLabelDate)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(lblDate)))
+                .addContainerGap(143, Short.MAX_VALUE))
         );
         jPanel12Layout.setVerticalGroup(
             jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel12Layout.createSequentialGroup()
                 .addComponent(jPanel13, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(jLabelDate)
+                .addGroup(jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(JLabelDate)
+                    .addComponent(lblDate))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabelTime)
+                .addGroup(jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabelTime)
+                    .addComponent(lblTime))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel29, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -464,7 +657,7 @@ public class AdminDash extends javax.swing.JFrame {
         jLabel19.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel19.setText("Revenue:");
 
-        jLabel23.setText("jLabel23");
+        lblRevenue.setText("jLabel23");
 
         jLabel13.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLabel13.setText("$");
@@ -479,7 +672,7 @@ public class AdminDash extends javax.swing.JFrame {
                     .addGroup(jPanel14Layout.createSequentialGroup()
                         .addComponent(jLabel13)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jLabel23))
+                        .addComponent(lblRevenue))
                     .addComponent(jLabel19))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -490,7 +683,7 @@ public class AdminDash extends javax.swing.JFrame {
                 .addComponent(jLabel19)
                 .addGap(21, 21, 21)
                 .addGroup(jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel23)
+                    .addComponent(lblRevenue)
                     .addComponent(jLabel13))
                 .addContainerGap(13, Short.MAX_VALUE))
         );
@@ -499,7 +692,7 @@ public class AdminDash extends javax.swing.JFrame {
 
         jLabel20.setText("Total Doctors:");
 
-        jLabel24.setText("jLabel24");
+        lblTotalDoctors.setText("jLabel24");
 
         javax.swing.GroupLayout jPanel15Layout = new javax.swing.GroupLayout(jPanel15);
         jPanel15.setLayout(jPanel15Layout);
@@ -512,7 +705,7 @@ public class AdminDash extends javax.swing.JFrame {
                         .addComponent(jLabel20))
                     .addGroup(jPanel15Layout.createSequentialGroup()
                         .addGap(56, 56, 56)
-                        .addComponent(jLabel24)))
+                        .addComponent(lblTotalDoctors)))
                 .addContainerGap(84, Short.MAX_VALUE))
         );
         jPanel15Layout.setVerticalGroup(
@@ -521,7 +714,7 @@ public class AdminDash extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel20)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jLabel24)
+                .addComponent(lblTotalDoctors)
                 .addGap(18, 18, 18))
         );
 
@@ -529,7 +722,7 @@ public class AdminDash extends javax.swing.JFrame {
 
         jLabel22.setText("Total Patients:");
 
-        jLabel25.setText("jLabel25");
+        lblTotalPatients.setText("jLabel25");
 
         javax.swing.GroupLayout jPanel16Layout = new javax.swing.GroupLayout(jPanel16);
         jPanel16.setLayout(jPanel16Layout);
@@ -538,7 +731,7 @@ public class AdminDash extends javax.swing.JFrame {
             .addGroup(jPanel16Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel25)
+                    .addComponent(lblTotalPatients)
                     .addComponent(jLabel22))
                 .addContainerGap(95, Short.MAX_VALUE))
         );
@@ -548,7 +741,7 @@ public class AdminDash extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel22)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jLabel25)
+                .addComponent(lblTotalPatients)
                 .addGap(19, 19, 19))
         );
 
@@ -622,52 +815,60 @@ public class AdminDash extends javax.swing.JFrame {
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
         // TODO add your handling code here:
+        new addDoctor(adminId).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
         // TODO add your handling code here:
+        new removePatient(adminId).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_jButton6ActionPerformed
 
     private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
         // TODO add your handling code here:
+        new systemStats(adminId).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_jButton7ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+        new removeDoctor(adminId).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed
+        // TODO add your handling code here:
+        new viewAppAdmin(adminId).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_jButton10ActionPerformed
+
+    private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
+        // TODO add your handling code here:
+        new EditAdmin(adminId).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_jButton8ActionPerformed
+
+    private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
+        // TODO add your handling code here:
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to logout?",
+                "Confirm Logout",
+                JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            new logIN().setVisible(true);
+            dispose();
+        }
+    }//GEN-LAST:event_jButton9ActionPerformed
 
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(AdminDash.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(AdminDash.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(AdminDash.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(AdminDash.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new AdminDash().setVisible(true);
-            }
-        });
-    }
+    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel JLabelDate;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton10;
     private javax.swing.JButton jButton5;
@@ -676,32 +877,22 @@ public class AdminDash extends javax.swing.JFrame {
     private javax.swing.JButton jButton8;
     private javax.swing.JButton jButton9;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel16;
-    private javax.swing.JLabel jLabel17;
-    private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
-    private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel22;
-    private javax.swing.JLabel jLabel23;
-    private javax.swing.JLabel jLabel24;
-    private javax.swing.JLabel jLabel25;
     private javax.swing.JLabel jLabel29;
-    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel30;
     private javax.swing.JLabel jLabel31;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JLabel jLabelDate;
     private javax.swing.JLabel jLabelTime;
     private javax.swing.JPanel jPanel10;
     private javax.swing.JPanel jPanel11;
@@ -714,6 +905,17 @@ public class AdminDash extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
+    private javax.swing.JLabel lblAdminId;
+    private javax.swing.JLabel lblDate;
+    private javax.swing.JLabel lblEmail;
+    private javax.swing.JLabel lblName;
+    private javax.swing.JLabel lblRevenue;
+    private javax.swing.JLabel lblSpecialty;
+    private javax.swing.JLabel lblTime;
+    private javax.swing.JLabel lblTotalDoctors;
+    private javax.swing.JLabel lblTotalPatients;
+    private javax.swing.JLabel lblUsername;
+    private javax.swing.JLabel lblWelcome;
+    private javax.swing.JTable tblAppointments;
     // End of variables declaration//GEN-END:variables
 }

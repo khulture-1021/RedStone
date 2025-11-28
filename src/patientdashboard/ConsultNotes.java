@@ -4,17 +4,64 @@
  */
 package patientdashboard;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import javax.swing.table.DefaultTableModel;
+import util.DatabaseConnection;
+
 /**
  *
  * @author bompe
  */
 public class ConsultNotes extends javax.swing.JFrame {
 
+    private int patientId; 
+    private String username;
+    
     /**
      * Creates new form ConsultNotes
      */
-    public ConsultNotes() {
+    public ConsultNotes(int patientId, String username) {
+        this.patientId = patientId;
+        this.username = username;
         initComponents();
+        loadConsultationNotes();
+    }
+    
+    private void loadConsultationNotes() {
+        DefaultTableModel model = (DefaultTableModel) consultationNotesTable.getModel();
+        model.setRowCount(0); // clear old rows
+
+        String sql = 
+            "SELECT a.appointmentDate, a.diagnosis, " +
+            "       CONCAT(d.firstName, ' ', d.lastName) AS doctorName, " +
+            "       a.treatment, a.doctorNotes " +
+            "FROM appointments a " +
+            "JOIN doctors d ON a.doctorId = d.doctorId " +
+            "WHERE a.patientId = ? " +
+            "AND a.status = 'COMPLETED' " +
+            "ORDER BY a.appointmentDate DESC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, patientId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                model.addRow(new Object[]{
+                        rs.getString("appointmentDate"),
+                        rs.getString("diagnosis"),
+                        rs.getString("doctorName"),
+                        rs.getString("treatment"),
+                        rs.getString("doctorNotes")
+                });
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -34,10 +81,10 @@ public class ConsultNotes extends javax.swing.JFrame {
         NavBtnMedicalHistory = new javax.swing.JButton();
         jButton7 = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
+        btnDashboard = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        consultationNotesTable = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
@@ -100,15 +147,28 @@ public class ConsultNotes extends javax.swing.JFrame {
         jButton7.setBorder(null);
         jButton7.setBorderPainted(false);
         jButton7.setContentAreaFilled(false);
+        jButton7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
 
         jLabel1.setFont(new java.awt.Font("Verdana", 1, 14)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/2.png"))); // NOI18N
         jLabel1.setText("Redstone Health Center");
 
-        jLabel6.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        jLabel6.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel6.setText("Dash Board");
+        btnDashboard.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        btnDashboard.setForeground(new java.awt.Color(255, 255, 255));
+        btnDashboard.setText("Dashboard");
+        btnDashboard.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        btnDashboard.setBorderPainted(false);
+        btnDashboard.setContentAreaFilled(false);
+        btnDashboard.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDashboardActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -127,7 +187,7 @@ public class ConsultNotes extends javax.swing.JFrame {
                             .addComponent(NavBtnCancelAppointment, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(NavBtnMedicalHistory)
                             .addComponent(jButton7)
-                            .addComponent(jLabel6))
+                            .addComponent(btnDashboard))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -136,9 +196,9 @@ public class ConsultNotes extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1)
-                .addGap(51, 51, 51)
-                .addComponent(jLabel6)
-                .addGap(18, 18, 18)
+                .addGap(53, 53, 53)
+                .addComponent(btnDashboard)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(NavBtnBookAppointment)
                 .addGap(18, 18, 18)
                 .addComponent(NavBtnCancelAppointment)
@@ -148,14 +208,14 @@ public class ConsultNotes extends javax.swing.JFrame {
                 .addComponent(NavBtnMedicalHistory)
                 .addGap(18, 18, 18)
                 .addComponent(jButton7)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(326, Short.MAX_VALUE))
         );
 
         jLabel5.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLabel5.setText("Consultation Notes");
 
-        jTable1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        consultationNotesTable.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        consultationNotesTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -171,7 +231,7 @@ public class ConsultNotes extends javax.swing.JFrame {
                 return types [columnIndex];
             }
         });
-        jScrollPane1.setViewportView(jTable1);
+        jScrollPane1.setViewportView(consultationNotesTable);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -213,71 +273,57 @@ public class ConsultNotes extends javax.swing.JFrame {
 
     private void NavBtnBookAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnBookAppointmentActionPerformed
         // TODO add your handling code here:
-
+        new BookAppointment(patientId,username).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_NavBtnBookAppointmentActionPerformed
 
     private void NavBtnCancelAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnCancelAppointmentActionPerformed
         // TODO add your handling code here:
-
+        new Cancel(patientId,username).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_NavBtnCancelAppointmentActionPerformed
 
     private void NavBtnEditProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnEditProfileActionPerformed
         // TODO add your handling code here:
-
+        new Edit(patientId,username).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_NavBtnEditProfileActionPerformed
 
     private void NavBtnMedicalHistoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnMedicalHistoryActionPerformed
         // TODO add your handling code here:
-
+        new History(patientId,username).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_NavBtnMedicalHistoryActionPerformed
+
+    private void btnDashboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDashboardActionPerformed
+        // TODO add your handling code here:
+        new patientsDash(patientId, username).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnDashboardActionPerformed
+
+    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+        // TODO add your handling code here:
+        new HelpFrame(patientId,username).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_jButton7ActionPerformed
 
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(ConsultNotes.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(ConsultNotes.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(ConsultNotes.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(ConsultNotes.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new ConsultNotes().setVisible(true);
-            }
-        });
-    }
+    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton NavBtnBookAppointment;
     private javax.swing.JButton NavBtnCancelAppointment;
     private javax.swing.JButton NavBtnEditProfile;
     private javax.swing.JButton NavBtnMedicalHistory;
+    private javax.swing.JButton btnDashboard;
+    private javax.swing.JTable consultationNotesTable;
     private javax.swing.JButton jButton7;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
     // End of variables declaration//GEN-END:variables
 }

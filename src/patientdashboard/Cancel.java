@@ -246,7 +246,7 @@ public class Cancel extends javax.swing.JFrame {
 
         btnDashboard.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnDashboard.setForeground(new java.awt.Color(255, 255, 255));
-        btnDashboard.setText("Dash board");
+        btnDashboard.setText("Dashboard");
         btnDashboard.setBorder(null);
         btnDashboard.setBorderPainted(false);
         btnDashboard.setContentAreaFilled(false);
@@ -299,6 +299,11 @@ public class Cancel extends javax.swing.JFrame {
         jButton7.setBorder(null);
         jButton7.setBorderPainted(false);
         jButton7.setContentAreaFilled(false);
+        jButton7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -446,12 +451,14 @@ public class Cancel extends javax.swing.JFrame {
 
     private void NavBtnBookAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnBookAppointmentActionPerformed
         // TODO add your handling code here:
-
+        new BookAppointment(patientId,username).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_NavBtnBookAppointmentActionPerformed
 
     private void NavBtnEditProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnEditProfileActionPerformed
         // TODO add your handling code here:
-
+        new Edit(patientId,username).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_NavBtnEditProfileActionPerformed
 
     private void NavBtnMedicalHistoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnMedicalHistoryActionPerformed
@@ -461,13 +468,20 @@ public class Cancel extends javax.swing.JFrame {
 
     private void NavBtnMedicalHistory1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnMedicalHistory1ActionPerformed
         // TODO add your handling code here:
-
+        new History(patientId,username).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_NavBtnMedicalHistory1ActionPerformed
 
     private void cmbFilterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbFilterActionPerformed
         // TODO add your handling code here:
         loadAppointments();
     }//GEN-LAST:event_cmbFilterActionPerformed
+
+    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+        // TODO add your handling code here:
+        new HelpFrame(patientId,username).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_jButton7ActionPerformed
 
     /**
      * @param args the command line arguments

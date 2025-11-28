@@ -25,7 +25,7 @@ public class DoctorDash extends javax.swing.JFrame {
     /**
      * Creates new form DoctorDash
      */
-    public DoctorDash(int doctorId, String username) {
+    public DoctorDash(int doctorId) {
         this.doctorId = doctorId;
         this.username = username;
         initComponents();

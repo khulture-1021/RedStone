@@ -343,7 +343,7 @@ public class Edit extends javax.swing.JFrame {
 
         btnDashboard.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnDashboard.setForeground(new java.awt.Color(255, 255, 255));
-        btnDashboard.setText("Dash Board");
+        btnDashboard.setText("Dashboard");
         btnDashboard.setBorder(null);
         btnDashboard.setBorderPainted(false);
         btnDashboard.setContentAreaFilled(false);
@@ -395,6 +395,11 @@ public class Edit extends javax.swing.JFrame {
         jButton7.setBorder(null);
         jButton7.setBorderPainted(false);
         jButton7.setContentAreaFilled(false);
+        jButton7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -604,7 +609,7 @@ public class Edit extends javax.swing.JFrame {
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                     .addComponent(lblBloodError)
                                     .addComponent(btnSave, javax.swing.GroupLayout.PREFERRED_SIZE, 296, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addContainerGap(25, Short.MAX_VALUE))
+                        .addContainerGap(35, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(lblStatus)
@@ -706,18 +711,27 @@ public class Edit extends javax.swing.JFrame {
 
     private void NavBtnBookAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnBookAppointmentActionPerformed
         // TODO add your handling code here:
-
+        new BookAppointment(patientId,username).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_NavBtnBookAppointmentActionPerformed
 
     private void NavBtnCancelAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnCancelAppointmentActionPerformed
         // TODO add your handling code here:
-
+        new Cancel(patientId,username).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_NavBtnCancelAppointmentActionPerformed
 
     private void NavBtnMedicalHistoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnMedicalHistoryActionPerformed
         // TODO add your handling code here:
-
+        new History(patientId,username).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_NavBtnMedicalHistoryActionPerformed
+
+    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+        // TODO add your handling code here:
+        new HelpFrame(patientId,username).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_jButton7ActionPerformed
 
     /**
      * @param args the command line arguments

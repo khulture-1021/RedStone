@@ -4,18 +4,163 @@
  */
 package patientdashboard;
 
+import util.DatabaseConnection;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import javax.swing.table.DefaultTableModel;
+
 /**
  *
  * @author bompe
  */
 public class systemStats extends javax.swing.JFrame {
 
+    private int adminId;
     /**
      * Creates new form systemStats
      */
-    public systemStats() {
+    public systemStats(int adminId) {
+        this.adminId = adminId;
         initComponents();
+        loadDashboardStats();
+        loadDoctorAvailability();
+        loadRecentAccounts();
     }
+    
+    // ============================================================
+    //  1. LOAD TOP STAT CARDS
+    // ============================================================
+    private void loadDashboardStats() {
+
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return;
+        }
+
+        try {
+            // Total Patients
+            PreparedStatement ps1 = conn.prepareStatement("SELECT COUNT(*) FROM patients");
+            ResultSet rs1 = ps1.executeQuery();
+            if (rs1.next()) {
+                totalPatientsLabel.setText(rs1.getString(1));
+            }
+
+            // Total Doctors
+            PreparedStatement ps2 = conn.prepareStatement("SELECT COUNT(*) FROM doctors");
+            ResultSet rs2 = ps2.executeQuery();
+            if (rs2.next()) {
+                totalDoctorsLabel.setText(rs2.getString(1));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    // ============================================================
+    //  2. LOAD DOCTOR AVAILABILITY TABLE
+    // ============================================================
+    private void loadDoctorAvailability() {
+
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return;
+        }
+
+        DefaultTableModel model = (DefaultTableModel) doctorAvailabilityTable.getModel();
+        model.setRowCount(0);
+
+        String sql = """
+            SELECT d.doctorId, d.firstName, d.lastName,
+            CASE 
+                WHEN a.status = 'CONFIRMED' AND DATE(a.appointmentDate) = CURDATE()
+                    THEN 'BUSY'
+                ELSE 'AVAILABLE'
+            END AS status
+            FROM doctors d
+            LEFT JOIN appointments a 
+                ON d.doctorId = a.doctorId 
+                AND DATE(a.appointmentDate) = CURDATE()
+        """;
+
+        try {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                model.addRow(new Object[]{
+                    rs.getInt("doctorId"),
+                    rs.getString("firstName"),
+                    rs.getString("lastName"),
+                    rs.getString("status")
+                });
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    // ============================================================
+    //  3. LOAD RECENT ACCOUNTS (last 7 days)
+    // ============================================================
+    private void loadRecentAccounts() {
+
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return;
+        }
+
+        DefaultTableModel model = (DefaultTableModel) recentTable.getModel();
+        model.setRowCount(0);
+
+        String sql = """
+            SELECT 'Patient' AS type, firstName, lastName, createdAt
+            FROM patients
+            WHERE createdAt >= NOW() - INTERVAL 7 DAY
+            
+            UNION ALL
+            
+            SELECT 'Doctor' AS type, firstName, lastName, createdAt
+            FROM doctors
+            WHERE createdAt >= NOW() - INTERVAL 7 DAY
+            
+            ORDER BY createdAt DESC
+        """;
+
+        try {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                model.addRow(new Object[]{
+                    rs.getString("type"),
+                    rs.getString("firstName"),
+                    rs.getString("lastName"),
+                    rs.getString("createdAt")
+                });
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -37,30 +182,30 @@ public class systemStats extends javax.swing.JFrame {
         jButton10 = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        doctorAvailabilityTable = new javax.swing.JTable();
         jPanel14 = new javax.swing.JPanel();
         jLabel19 = new javax.swing.JLabel();
-        jLabel23 = new javax.swing.JLabel();
+        lblRevenue = new javax.swing.JLabel();
         jLabel13 = new javax.swing.JLabel();
         jPanel15 = new javax.swing.JPanel();
         jLabel20 = new javax.swing.JLabel();
-        jLabel24 = new javax.swing.JLabel();
+        totalDoctorsLabel = new javax.swing.JLabel();
         jPanel16 = new javax.swing.JPanel();
         jLabel22 = new javax.swing.JLabel();
-        jLabel25 = new javax.swing.JLabel();
+        totalPatientsLabel = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
+        lblMostActiveDoctor = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
-        jLabel11 = new javax.swing.JLabel();
+        lblCancellations = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
-        jLabel10 = new javax.swing.JLabel();
+        lblCommonDiagnosis = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jTable2 = new javax.swing.JTable();
+        recentTable = new javax.swing.JTable();
         jLabel9 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -96,7 +241,7 @@ public class systemStats extends javax.swing.JFrame {
 
         jButton7.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jButton7.setForeground(new java.awt.Color(255, 255, 255));
-        jButton7.setText("Dash Board");
+        jButton7.setText("Dashboard");
         jButton7.setBorder(null);
         jButton7.setBorderPainted(false);
         jButton7.setContentAreaFilled(false);
@@ -108,10 +253,15 @@ public class systemStats extends javax.swing.JFrame {
 
         jButton8.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jButton8.setForeground(new java.awt.Color(255, 255, 255));
-        jButton8.setText("Edit Profile");
+        jButton8.setText("Admin Profile");
         jButton8.setBorder(null);
         jButton8.setBorderPainted(false);
         jButton8.setContentAreaFilled(false);
+        jButton8.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton8ActionPerformed(evt);
+            }
+        });
 
         jLabel1.setFont(new java.awt.Font("Verdana", 1, 14)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
@@ -124,6 +274,11 @@ public class systemStats extends javax.swing.JFrame {
         jButton1.setBorder(null);
         jButton1.setBorderPainted(false);
         jButton1.setContentAreaFilled(false);
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         jButton10.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jButton10.setForeground(new java.awt.Color(255, 255, 255));
@@ -131,6 +286,11 @@ public class systemStats extends javax.swing.JFrame {
         jButton10.setBorder(null);
         jButton10.setBorderPainted(false);
         jButton10.setContentAreaFilled(false);
+        jButton10.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton10ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
         jPanel8.setLayout(jPanel8Layout);
@@ -176,8 +336,8 @@ public class systemStats extends javax.swing.JFrame {
         jLabel5.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLabel5.setText("Admin DashBoard");
 
-        jTable1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        doctorAvailabilityTable.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        doctorAvailabilityTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -193,7 +353,7 @@ public class systemStats extends javax.swing.JFrame {
                 return types [columnIndex];
             }
         });
-        jScrollPane1.setViewportView(jTable1);
+        jScrollPane1.setViewportView(doctorAvailabilityTable);
 
         jPanel14.setBackground(new java.awt.Color(255, 255, 255));
         jPanel14.setBorder(javax.swing.BorderFactory.createMatteBorder(1, 1, 1, 1, new java.awt.Color(0, 153, 153)));
@@ -202,7 +362,7 @@ public class systemStats extends javax.swing.JFrame {
         jLabel19.setForeground(new java.awt.Color(102, 102, 102));
         jLabel19.setText("Revenue:");
 
-        jLabel23.setText("jLabel23");
+        lblRevenue.setText("jLabel23");
 
         jLabel13.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLabel13.setText("$");
@@ -217,7 +377,7 @@ public class systemStats extends javax.swing.JFrame {
                         .addGap(18, 18, 18)
                         .addComponent(jLabel13)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jLabel23))
+                        .addComponent(lblRevenue))
                     .addGroup(jPanel14Layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jLabel19)))
@@ -230,7 +390,7 @@ public class systemStats extends javax.swing.JFrame {
                 .addComponent(jLabel19)
                 .addGap(21, 21, 21)
                 .addGroup(jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel23)
+                    .addComponent(lblRevenue)
                     .addComponent(jLabel13))
                 .addContainerGap(13, Short.MAX_VALUE))
         );
@@ -241,7 +401,7 @@ public class systemStats extends javax.swing.JFrame {
         jLabel20.setForeground(new java.awt.Color(102, 102, 102));
         jLabel20.setText("Total Doctors:");
 
-        jLabel24.setText("jLabel24");
+        totalDoctorsLabel.setText("jLabel24");
 
         javax.swing.GroupLayout jPanel15Layout = new javax.swing.GroupLayout(jPanel15);
         jPanel15.setLayout(jPanel15Layout);
@@ -254,7 +414,7 @@ public class systemStats extends javax.swing.JFrame {
                         .addComponent(jLabel20))
                     .addGroup(jPanel15Layout.createSequentialGroup()
                         .addGap(56, 56, 56)
-                        .addComponent(jLabel24)))
+                        .addComponent(totalDoctorsLabel)))
                 .addContainerGap(84, Short.MAX_VALUE))
         );
         jPanel15Layout.setVerticalGroup(
@@ -263,7 +423,7 @@ public class systemStats extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel20)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 29, Short.MAX_VALUE)
-                .addComponent(jLabel24)
+                .addComponent(totalDoctorsLabel)
                 .addGap(18, 18, 18))
         );
 
@@ -273,7 +433,7 @@ public class systemStats extends javax.swing.JFrame {
         jLabel22.setForeground(new java.awt.Color(102, 102, 102));
         jLabel22.setText("Total Patients:");
 
-        jLabel25.setText("jLabel25");
+        totalPatientsLabel.setText("jLabel25");
 
         javax.swing.GroupLayout jPanel16Layout = new javax.swing.GroupLayout(jPanel16);
         jPanel16.setLayout(jPanel16Layout);
@@ -282,7 +442,7 @@ public class systemStats extends javax.swing.JFrame {
             .addGroup(jPanel16Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel25)
+                    .addComponent(totalPatientsLabel)
                     .addComponent(jLabel22))
                 .addContainerGap(95, Short.MAX_VALUE))
         );
@@ -292,7 +452,7 @@ public class systemStats extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel22)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 28, Short.MAX_VALUE)
-                .addComponent(jLabel25)
+                .addComponent(totalPatientsLabel)
                 .addGap(19, 19, 19))
         );
 
@@ -304,7 +464,7 @@ public class systemStats extends javax.swing.JFrame {
 
         jLabel3.setText("Dr.");
 
-        jLabel4.setText("jLabel4");
+        lblMostActiveDoctor.setText("jLabel4");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -319,7 +479,7 @@ public class systemStats extends javax.swing.JFrame {
                         .addGap(25, 25, 25)
                         .addComponent(jLabel3)
                         .addGap(18, 18, 18)
-                        .addComponent(jLabel4)))
+                        .addComponent(lblMostActiveDoctor)))
                 .addContainerGap(77, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -330,7 +490,7 @@ public class systemStats extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
-                    .addComponent(jLabel4))
+                    .addComponent(lblMostActiveDoctor))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -340,7 +500,7 @@ public class systemStats extends javax.swing.JFrame {
         jLabel7.setForeground(new java.awt.Color(102, 102, 102));
         jLabel7.setText("Cancellations:");
 
-        jLabel11.setText("jLabel11");
+        lblCancellations.setText("jLabel11");
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -353,7 +513,7 @@ public class systemStats extends javax.swing.JFrame {
                         .addComponent(jLabel7))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGap(27, 27, 27)
-                        .addComponent(jLabel11)))
+                        .addComponent(lblCancellations)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
@@ -362,7 +522,7 @@ public class systemStats extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel7)
                 .addGap(18, 18, 18)
-                .addComponent(jLabel11)
+                .addComponent(lblCancellations)
                 .addContainerGap(25, Short.MAX_VALUE))
         );
 
@@ -372,7 +532,7 @@ public class systemStats extends javax.swing.JFrame {
         jLabel6.setForeground(new java.awt.Color(102, 102, 102));
         jLabel6.setText("Common Diagnosis:");
 
-        jLabel10.setText("jLabel10");
+        lblCommonDiagnosis.setText("jLabel10");
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -385,7 +545,7 @@ public class systemStats extends javax.swing.JFrame {
                         .addComponent(jLabel6))
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGap(53, 53, 53)
-                        .addComponent(jLabel10)))
+                        .addComponent(lblCommonDiagnosis)))
                 .addContainerGap(69, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
@@ -394,13 +554,13 @@ public class systemStats extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel6)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel10)
+                .addComponent(lblCommonDiagnosis)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jLabel8.setText("Doctor Availabilty Overview");
 
-        jTable2.setModel(new javax.swing.table.DefaultTableModel(
+        recentTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -423,7 +583,7 @@ public class systemStats extends javax.swing.JFrame {
                 return canEdit [columnIndex];
             }
         });
-        jScrollPane2.setViewportView(jTable2);
+        jScrollPane2.setViewportView(recentTable);
 
         jLabel9.setText("New Accounts");
 
@@ -512,52 +672,47 @@ public class systemStats extends javax.swing.JFrame {
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
         // TODO add your handling code here:
+        new addDoctor(adminId).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
         // TODO add your handling code here:
+        new removePatient(adminId).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_jButton6ActionPerformed
 
     private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
         // TODO add your handling code here:
+        new AdminDash(adminId).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_jButton7ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+        new removeDoctor(adminId).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed
+        // TODO add your handling code here:
+        new viewAppAdmin(adminId).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_jButton10ActionPerformed
+
+    private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
+        // TODO add your handling code here:
+        new EditAdmin(adminId).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_jButton8ActionPerformed
 
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(systemStats.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(systemStats.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(systemStats.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(systemStats.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new systemStats().setVisible(true);
-            }
-        });
-    }
+    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTable doctorAvailabilityTable;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton10;
     private javax.swing.JButton jButton5;
@@ -565,18 +720,12 @@ public class systemStats extends javax.swing.JFrame {
     private javax.swing.JButton jButton7;
     private javax.swing.JButton jButton8;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel10;
-    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel22;
-    private javax.swing.JLabel jLabel23;
-    private javax.swing.JLabel jLabel24;
-    private javax.swing.JLabel jLabel25;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
@@ -592,7 +741,12 @@ public class systemStats extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel8;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTable jTable1;
-    private javax.swing.JTable jTable2;
+    private javax.swing.JLabel lblCancellations;
+    private javax.swing.JLabel lblCommonDiagnosis;
+    private javax.swing.JLabel lblMostActiveDoctor;
+    private javax.swing.JLabel lblRevenue;
+    private javax.swing.JTable recentTable;
+    private javax.swing.JLabel totalDoctorsLabel;
+    private javax.swing.JLabel totalPatientsLabel;
     // End of variables declaration//GEN-END:variables
 }

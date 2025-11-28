@@ -41,8 +41,7 @@ public class History extends javax.swing.JFrame {
         this.username = username;
         
         loadHistory();
-        setupSearch();         // wire search field
-        setupTableDoubleClick(); // optional: double-click open details
+        setupSearch();   // optional: double-click open details
     }
     
     // ================= LOAD HISTORY TABLE ======================
@@ -109,104 +108,9 @@ public class History extends javax.swing.JFrame {
         });
     }
 
-    private void openViewDetails() {
-        int selectedRow = tblHistory.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Select a record to view details.", "No selection", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-        // convert row index in view to model
-        selectedRow = tblHistory.convertRowIndexToModel(selectedRow);
-        DefaultTableModel model = (DefaultTableModel) tblHistory.getModel();
+    
 
-        String date = String.valueOf(model.getValueAt(selectedRow, 0));
-        String time = String.valueOf(model.getValueAt(selectedRow, 1));
-        String doctor = String.valueOf(model.getValueAt(selectedRow, 2));
-        String diagnosis = String.valueOf(model.getValueAt(selectedRow, 3));
-        String notes = String.valueOf(model.getValueAt(selectedRow, 4));
-        String prescription = String.valueOf(model.getValueAt(selectedRow, 5));
-        String fees = String.valueOf(model.getValueAt(selectedRow, 6));
-
-        // Build the message in a JTextArea inside a JOptionPane for long text
-        JTextArea area = new JTextArea(12, 50);
-        area.setEditable(false);
-        StringBuilder sb = new StringBuilder();
-        sb.append("Date: ").append(date).append("\n");
-        sb.append("Time: ").append(time).append("\n");
-        sb.append("Doctor: ").append(doctor).append("\n\n");
-        sb.append("Diagnosis:\n").append(diagnosis).append("\n\n");
-        sb.append("Notes:\n").append(notes).append("\n\n");
-        sb.append("Prescription:\n").append(prescription).append("\n\n");
-        sb.append("Service Fees: ").append(fees).append("\n");
-        area.setText(sb.toString());
-        area.setCaretPosition(0);
-
-        JOptionPane.showMessageDialog(this, new JScrollPane(area), "Record Details", JOptionPane.INFORMATION_MESSAGE);
-    }
-
-    private void setupTableDoubleClick() {
-        tblHistory.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                if (evt.getClickCount() == 2) openViewDetails();
-            }
-        });
-    }
-
-    private void openAddRecordDialog() {
-    JPanel panel = new JPanel(new GridLayout(0,2,6,6));
-    JTextField fldDate = new JTextField(new SimpleDateFormat("yyyy-MM-dd").format(new Date())); // default today
-    JTextField fldTime = new JTextField(new SimpleDateFormat("HH:mm").format(new Date()));
-    JTextField fldDoctor = new JTextField();
-    JTextField fldDiagnosis = new JTextField();
-    JTextArea fldNotes = new JTextArea(4, 20);
-    JTextArea fldPrescription = new JTextArea(3, 20);
-    JTextField fldFees = new JTextField();
-
-    panel.add(new JLabel("Date (yyyy-MM-dd):")); panel.add(fldDate);
-    panel.add(new JLabel("Time (HH:mm):")); panel.add(fldTime);
-    panel.add(new JLabel("Doctor:")); panel.add(fldDoctor);
-    panel.add(new JLabel("Diagnosis:")); panel.add(fldDiagnosis);
-    panel.add(new JLabel("Notes:")); panel.add(new JScrollPane(fldNotes));
-    panel.add(new JLabel("Prescription:")); panel.add(new JScrollPane(fldPrescription));
-    panel.add(new JLabel("Service Fees:")); panel.add(fldFees);
-
-    int result = JOptionPane.showConfirmDialog(this, panel, "Add New History Record", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-    if (result == JOptionPane.OK_OPTION) {
-        // basic validation
-        String date = fldDate.getText().trim();
-        String time = fldTime.getText().trim();
-        String doctor = fldDoctor.getText().trim();
-        String diagnosis = fldDiagnosis.getText().trim();
-        String notes = fldNotes.getText().trim();
-        String prescription = fldPrescription.getText().trim();
-        String fees = fldFees.getText().trim();
-
-        if (date.isEmpty() || doctor.isEmpty() || diagnosis.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please fill Date, Doctor and Diagnosis at minimum.", "Validation", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        String insert = "INSERT INTO history(patient_id, date, time, doctor, diagnosis, notes, prescription, service_fees) VALUES(?,?,?,?,?,?,?,?)";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(insert)) {
-
-            ps.setInt(1, patientId);
-            ps.setString(2, date);
-            ps.setString(3, time);
-            ps.setString(4, doctor);
-            ps.setString(5, diagnosis);
-            ps.setString(6, notes);
-            ps.setString(7, prescription);
-            ps.setString(8, fees);
-            ps.executeUpdate();
-
-            JOptionPane.showMessageDialog(this, "Record added successfully.", "Saved", JOptionPane.INFORMATION_MESSAGE);
-            loadHistory();
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Failed to add record:\n" + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-}
+    
     
     private void exportToPdfFile(String outputPath) {
     DefaultTableModel model = (DefaultTableModel) tblHistory.getModel();
@@ -274,8 +178,6 @@ public class History extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         tblHistory = new javax.swing.JTable();
         txtSearch = new javax.swing.JTextField();
-        btnViewDetails = new javax.swing.JButton();
-        btnAddRecord = new javax.swing.JButton();
         btnExportPDF = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -286,7 +188,7 @@ public class History extends javax.swing.JFrame {
 
         NavBtnBack2Dash.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         NavBtnBack2Dash.setForeground(new java.awt.Color(255, 255, 255));
-        NavBtnBack2Dash.setText("Dash Board");
+        NavBtnBack2Dash.setText("Dashboard");
         NavBtnBack2Dash.setBorder(null);
         NavBtnBack2Dash.setBorderPainted(false);
         NavBtnBack2Dash.setContentAreaFilled(false);
@@ -343,6 +245,11 @@ public class History extends javax.swing.JFrame {
         jButton7.setBorder(null);
         jButton7.setBorderPainted(false);
         jButton7.setContentAreaFilled(false);
+        jButton7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -412,20 +319,6 @@ public class History extends javax.swing.JFrame {
 
         txtSearch.setText("Search (date/doctor/prescription)");
 
-        btnViewDetails.setText("View Details");
-        btnViewDetails.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnViewDetailsActionPerformed(evt);
-            }
-        });
-
-        btnAddRecord.setText("Add Records");
-        btnAddRecord.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnAddRecordActionPerformed(evt);
-            }
-        });
-
         btnExportPDF.setText("Export to PDF");
         btnExportPDF.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -442,16 +335,12 @@ public class History extends javax.swing.JFrame {
                 .addGap(84, 84, 84)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(6, 6, 6)
-                        .addComponent(btnViewDetails)
-                        .addGap(136, 136, 136)
-                        .addComponent(btnAddRecord)
-                        .addGap(110, 110, 110)
+                        .addGap(442, 442, 442)
                         .addComponent(btnExportPDF)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 820, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(35, Short.MAX_VALUE))
+                        .addContainerGap(43, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -473,10 +362,7 @@ public class History extends javax.swing.JFrame {
                         .addGap(18, 18, 18)))
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 485, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnViewDetails)
-                    .addComponent(btnAddRecord)
-                    .addComponent(btnExportPDF))
+                .addComponent(btnExportPDF)
                 .addContainerGap(22, Short.MAX_VALUE))
         );
 
@@ -503,33 +389,32 @@ public class History extends javax.swing.JFrame {
 
     private void NavBtnBookAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnBookAppointmentActionPerformed
         // TODO add your handling code here:
-
+        new BookAppointment(patientId,username).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_NavBtnBookAppointmentActionPerformed
 
     private void NavBtnCancelAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnCancelAppointmentActionPerformed
         // TODO add your handling code here:
-
+        new Cancel(patientId,username).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_NavBtnCancelAppointmentActionPerformed
 
     private void NavBtnEditProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnEditProfileActionPerformed
         // TODO add your handling code here:
-
+        new Edit(patientId,username).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_NavBtnEditProfileActionPerformed
-
-    private void btnViewDetailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnViewDetailsActionPerformed
-        // TODO add your handling code here:
-        openViewDetails();
-    }//GEN-LAST:event_btnViewDetailsActionPerformed
-
-    private void btnAddRecordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddRecordActionPerformed
-        // TODO add your handling code here:
-        openAddRecordDialog();
-    }//GEN-LAST:event_btnAddRecordActionPerformed
 
     private void btnExportPDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExportPDFActionPerformed
         // TODO add your handling code here:
         onExportPdfClick();
     }//GEN-LAST:event_btnExportPDFActionPerformed
+
+    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+        // TODO add your handling code here:
+        new HelpFrame(patientId,username).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_jButton7ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -541,9 +426,7 @@ public class History extends javax.swing.JFrame {
     private javax.swing.JButton NavBtnBookAppointment;
     private javax.swing.JButton NavBtnCancelAppointment;
     private javax.swing.JButton NavBtnEditProfile;
-    private javax.swing.JButton btnAddRecord;
     private javax.swing.JButton btnExportPDF;
-    private javax.swing.JButton btnViewDetails;
     private javax.swing.JButton jButton7;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel8;

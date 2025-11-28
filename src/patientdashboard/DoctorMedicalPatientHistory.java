@@ -111,10 +111,9 @@ public class DoctorMedicalPatientHistory extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         NavBtnBack2Dash = new javax.swing.JButton();
         jLabel8 = new javax.swing.JLabel();
-        NavBtnBookAppointment = new javax.swing.JButton();
-        NavBtnCancelAppointment = new javax.swing.JButton();
+        NavBtnviewAppointment = new javax.swing.JButton();
+        NavBtnConsulatation = new javax.swing.JButton();
         NavBtnEditProfile = new javax.swing.JButton();
-        jButton7 = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         medicalHistoryTable = new javax.swing.JTable();
@@ -131,7 +130,7 @@ public class DoctorMedicalPatientHistory extends javax.swing.JFrame {
 
         NavBtnBack2Dash.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         NavBtnBack2Dash.setForeground(new java.awt.Color(255, 255, 255));
-        NavBtnBack2Dash.setText("Dash Board");
+        NavBtnBack2Dash.setText("Dashboard");
         NavBtnBack2Dash.setBorder(null);
         NavBtnBack2Dash.setBorderPainted(false);
         NavBtnBack2Dash.setContentAreaFilled(false);
@@ -146,27 +145,27 @@ public class DoctorMedicalPatientHistory extends javax.swing.JFrame {
         jLabel8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/2.png"))); // NOI18N
         jLabel8.setText("Redstone Health Center");
 
-        NavBtnBookAppointment.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        NavBtnBookAppointment.setForeground(new java.awt.Color(255, 255, 255));
-        NavBtnBookAppointment.setText("Book Appointment");
-        NavBtnBookAppointment.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-        NavBtnBookAppointment.setBorderPainted(false);
-        NavBtnBookAppointment.setContentAreaFilled(false);
-        NavBtnBookAppointment.addActionListener(new java.awt.event.ActionListener() {
+        NavBtnviewAppointment.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        NavBtnviewAppointment.setForeground(new java.awt.Color(255, 255, 255));
+        NavBtnviewAppointment.setText("View Appointments");
+        NavBtnviewAppointment.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        NavBtnviewAppointment.setBorderPainted(false);
+        NavBtnviewAppointment.setContentAreaFilled(false);
+        NavBtnviewAppointment.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                NavBtnBookAppointmentActionPerformed(evt);
+                NavBtnviewAppointmentActionPerformed(evt);
             }
         });
 
-        NavBtnCancelAppointment.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        NavBtnCancelAppointment.setForeground(new java.awt.Color(255, 255, 255));
-        NavBtnCancelAppointment.setText("Cancel Appointment");
-        NavBtnCancelAppointment.setBorder(null);
-        NavBtnCancelAppointment.setBorderPainted(false);
-        NavBtnCancelAppointment.setContentAreaFilled(false);
-        NavBtnCancelAppointment.addActionListener(new java.awt.event.ActionListener() {
+        NavBtnConsulatation.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        NavBtnConsulatation.setForeground(new java.awt.Color(255, 255, 255));
+        NavBtnConsulatation.setText("Consulatation");
+        NavBtnConsulatation.setBorder(null);
+        NavBtnConsulatation.setBorderPainted(false);
+        NavBtnConsulatation.setContentAreaFilled(false);
+        NavBtnConsulatation.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                NavBtnCancelAppointmentActionPerformed(evt);
+                NavBtnConsulatationActionPerformed(evt);
             }
         });
 
@@ -182,13 +181,6 @@ public class DoctorMedicalPatientHistory extends javax.swing.JFrame {
             }
         });
 
-        jButton7.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        jButton7.setForeground(new java.awt.Color(255, 255, 255));
-        jButton7.setText("Help");
-        jButton7.setBorder(null);
-        jButton7.setBorderPainted(false);
-        jButton7.setContentAreaFilled(false);
-
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -200,11 +192,10 @@ public class DoctorMedicalPatientHistory extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGap(56, 56, 56)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton7)
                     .addComponent(NavBtnEditProfile)
-                    .addComponent(NavBtnCancelAppointment, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(NavBtnBookAppointment)
-                    .addComponent(NavBtnBack2Dash))
+                    .addComponent(NavBtnviewAppointment)
+                    .addComponent(NavBtnBack2Dash)
+                    .addComponent(NavBtnConsulatation))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
@@ -215,13 +206,11 @@ public class DoctorMedicalPatientHistory extends javax.swing.JFrame {
                 .addGap(50, 50, 50)
                 .addComponent(NavBtnBack2Dash)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(NavBtnBookAppointment)
+                .addComponent(NavBtnviewAppointment)
                 .addGap(18, 18, 18)
-                .addComponent(NavBtnCancelAppointment)
+                .addComponent(NavBtnConsulatation)
                 .addGap(18, 18, 18)
                 .addComponent(NavBtnEditProfile)
-                .addGap(18, 18, 18)
-                .addComponent(jButton7)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -341,18 +330,26 @@ public class DoctorMedicalPatientHistory extends javax.swing.JFrame {
 
     private void NavBtnBack2DashActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnBack2DashActionPerformed
         // TODO add your handling code here:
+        new DoctorDash(doctorId).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_NavBtnBack2DashActionPerformed
 
-    private void NavBtnBookAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnBookAppointmentActionPerformed
+    private void NavBtnviewAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnviewAppointmentActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_NavBtnBookAppointmentActionPerformed
+        new viewAppDoctor(doctorId).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_NavBtnviewAppointmentActionPerformed
 
-    private void NavBtnCancelAppointmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnCancelAppointmentActionPerformed
+    private void NavBtnConsulatationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnConsulatationActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_NavBtnCancelAppointmentActionPerformed
+        new Consultaion(doctorId).setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_NavBtnConsulatationActionPerformed
 
     private void NavBtnEditProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NavBtnEditProfileActionPerformed
         // TODO add your handling code here:
+        new EditDoctor(doctorId).setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_NavBtnEditProfileActionPerformed
 
     private void btnViewDetailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnViewDetailsActionPerformed
@@ -383,47 +380,16 @@ public class DoctorMedicalPatientHistory extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(DoctorMedicalPatientHistory.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(DoctorMedicalPatientHistory.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(DoctorMedicalPatientHistory.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(DoctorMedicalPatientHistory.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new DoctorMedicalPatientHistory(1).setVisible(true);
-            }
-        });
-    }
+    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton NavBtnBack2Dash;
-    private javax.swing.JButton NavBtnBookAppointment;
-    private javax.swing.JButton NavBtnCancelAppointment;
+    private javax.swing.JButton NavBtnConsulatation;
     private javax.swing.JButton NavBtnEditProfile;
+    private javax.swing.JButton NavBtnviewAppointment;
     private javax.swing.JButton btnAddRecord;
     private javax.swing.JButton btnExportPDF;
     private javax.swing.JButton btnViewDetails;
-    private javax.swing.JButton jButton7;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;

@@ -331,7 +331,7 @@ public class logIN extends javax.swing.JFrame {
         } else if (role.equals("Doctor")) {
             sql = "SELECT doctorId, username FROM doctors WHERE username=? AND password=?";
         } else if (role.equals("Admin")) {
-            sql = "SELECT adminId, username FROM admin WHERE username=? AND password=?";
+            sql = "SELECT adminId, username FROM admins WHERE username=? AND password=?";
         }
 
         try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/redstone", "root", "")) {
@@ -357,8 +357,17 @@ public class logIN extends javax.swing.JFrame {
                     int doctorId = rs.getInt(1);
                     String user = rs.getString("username");
 
-                    DoctorDash d = new DoctorDash(doctorId, user);
+                    DoctorDash d = new DoctorDash(doctorId);
                     d.setVisible(true);
+                    this.dispose();
+                }
+                
+                else if (role.equals("Admin")) {
+                    int doctorId = rs.getInt(1);
+                    String user = rs.getString("username");
+
+                    AdminDash a = new AdminDash(adminId);
+                    a.setVisible(true);
                     this.dispose();
                 }
 
